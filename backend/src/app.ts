@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { errorHandler } from './middleware/errorHandler';
 import deadlineRoutes from './routes/deadlines.routes';
+import listingRoutes from './routes/listings.routes';
+import authRoutes from './routes/auth.routes';
 
 const app = express();
 app.use(helmet());
@@ -17,3 +19,7 @@ app.use('/v1/deadlines', deadlineRoutes);
 
 app.use(errorHandler);
 export default app;
+
+app.use('/v1/listings', listingRoutes);
+
+app.use('/v1/auth', authRoutes);

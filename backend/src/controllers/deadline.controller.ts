@@ -25,7 +25,7 @@ export async function updateDeadline(req: Request, res: Response) {
   try {
     const userId = (req as any).user.id;
     const deadline = await DeadlineService.updateDeadline(
-      req.params.id, userId, req.body
+      req.params.id as string, userId, req.body
     );
     if (!deadline) return res.status(404).json({ error: 'Deadline not found' });
     res.json(deadline);
@@ -37,7 +37,7 @@ export async function updateDeadline(req: Request, res: Response) {
 export async function deleteDeadline(req: Request, res: Response) {
   try {
     const userId = (req as any).user.id;
-    await DeadlineService.deleteDeadline(req.params.id, userId);
+    await DeadlineService.deleteDeadline(req.params.id as string, userId);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete deadline' });

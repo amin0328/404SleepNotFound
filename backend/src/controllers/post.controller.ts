@@ -23,7 +23,7 @@ export async function createPost(req: Request, res: Response) {
 
 export async function getPostById(req: Request, res: Response) {
   try {
-    const post = await PostService.getPostById(req.params.id);
+    const post = await PostService.getPostById(req.params.id as string);
     if (!post) return res.status(404).json({ error: 'Post not found' });
     res.json(post);
   } catch (err) {
@@ -34,7 +34,7 @@ export async function getPostById(req: Request, res: Response) {
 export async function expressInterest(req: Request, res: Response) {
   try {
     const userId = (req as any).user.id;
-    const result = await PostService.expressInterest(req.params.id, userId);
+    const result = await PostService.expressInterest(req.params.id as string, userId);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to express interest' });

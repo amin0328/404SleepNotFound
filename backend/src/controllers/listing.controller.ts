@@ -20,7 +20,7 @@ export async function getListings(req: Request, res: Response) {
 
 export async function getListingById(req: Request, res: Response) {
   try {
-    const listing = await ListingService.getListingById(req.params.id);
+    const listing = await ListingService.getListingById(req.params.id as string);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
     res.json(listing);
   } catch (err) {

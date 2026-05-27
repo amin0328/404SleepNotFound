@@ -1,6 +1,7 @@
 // mobile/lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/features/auth/landing_screen.dart';
 
 void main() {
   runApp(
@@ -22,11 +23,7 @@ class NusHubApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF003D7C)),
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: Center(
-          child: Text('NUS International Student Hub'),
-        ),
-      ),
+      home: const LandingScreen(),
     );
   }
 }

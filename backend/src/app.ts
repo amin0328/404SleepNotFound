@@ -10,6 +10,7 @@ import postRoutes from './routes/posts.routes';
 import userRoutes from './routes/users.routes';
 
 const app = express();
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
@@ -19,14 +20,11 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 app.use('/v1/deadlines', deadlineRoutes);
+app.use('/v1/listings', listingRoutes);
+app.use('/v1/auth', authRoutes);
+app.use('/v1/posts', postRoutes);
+app.use('/v1/users', userRoutes);
 
 app.use(errorHandler);
+
 export default app;
-
-app.use('/v1/listings', listingRoutes);
-
-app.use('/v1/auth', authRoutes);
-
-app.use('/v1/posts', postRoutes);
-
-app.use('/v1/users', userRoutes);

@@ -59,7 +59,7 @@ const recommendations = othersResult.rows.map((other: {
   post_id: other.post_id,
   user: { id: other.id, name: other.name },
   match_score: compatibilityScore(userLifestyle, other.lifestyle || {}),
-})).sort((a, b) => b.match_score - a.match_score);
+})).sort((a: { match_score: number }, b: { match_score: number }) => b.match_score - a.match_score);
 
   return { post_id: postId, interested: true, recommendations };
 }

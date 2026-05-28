@@ -14,7 +14,7 @@ export async function getDeadlinesByUser(userId: string) {
     'SELECT * FROM deadlines WHERE user_id = $1 ORDER BY due_date ASC',
     [userId]
   );
-  return result.rows.map(d:any => ({ ...d, urgency: getUrgency(d.due_date) }));
+  return result.rows.map((d: any) => ({ ...d, urgency: getUrgency(d.due_date) }));
 }
 
 export async function createDeadline(userId: string, data: {

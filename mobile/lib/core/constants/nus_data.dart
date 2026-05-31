@@ -1,3 +1,27 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+Future<List<Map<String, String>>> fetchCountries() async {
+  final response = await http.get(
+    Uri.parse('https://restcountries.com/v3.1/all?fields=name,cca2,currencies'),
+  );
+  
+  if (response.statusCode == 200) {
+    final List data = jsonDecode(response.body);
+    final countries = data.map((c) {
+      final name = c['name']['common'] as String;
+      final code = c['cca2'] as String;
+      final currencies = c['currencies'] as Map?;
+      final currency = currencies?.keys.first ?? '';
+      return {'name': name, 'code': code, 'currency': currency};
+    }).toList();
+    
+    countries.sort((a, b) => a['name']!.compareTo(b['name']!));
+    return List<Map<String, String>>.from(countries);
+  }
+  throw Exception('Failed to load countries');
+}
+
 const Map<String, List<String>> facultyMajors = {
   'FASS': [
     'Not declared yet',

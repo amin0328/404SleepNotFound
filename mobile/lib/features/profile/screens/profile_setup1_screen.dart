@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/features/profile/screens/profile_setup1_screen.dart';
 import 'package:mobile/shared/widgets/auth_text_field.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
 import 'package:mobile/shared/widgets/app_background.dart';
+import 'package:mobile/features/profile/screens/profile_setup2_screen.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class ProfileSetup1Screen extends StatefulWidget {
+  const ProfileSetup1Screen({super.key});
   
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<ProfileSetup1Screen> createState() => _ProfileSetup1ScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
+  final TextEditingController gradYearController = TextEditingController();
+  final TextEditingController facultyController = TextEditingController();
+  final TextEditingController majorController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 top: 160
               ),
               child: Text(
-                'Registration',
+                'Glad to\nmeet you!',
                 style: TextStyle(
                   fontFamily: "Jost",
                   fontWeight: FontWeight.w600,
@@ -63,7 +62,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.32,
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.45,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: (MediaQuery.of(context).size.width - 300) / 2, 
+                top: 290
+              ),
+              child: Text(
+                'Tell us a bit about yourself.',
+                style: TextStyle(
+                  fontFamily: "Jost",
+                  fontWeight: FontWeight.w600,
+                  fontSize: 24,
+                  color: Color(0xff001743),
+                  height: 1.1,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.32 + 72 + 16,
             left: 0,
             right: 0,
             child: Column(
@@ -72,24 +93,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(
                   width: 300,
                   child: AuthTextField(
-                    controller: fullNameController,
-                    hintText: 'Full name',
+                    controller: gradYearController,
+                    hintText: 'Graduating Year (e.g. 2028)',
                   ),
                 ),
                 SizedBox(height: 16),
                 SizedBox(
                   width: 300,
                   child: AuthTextField(
-                    controller: emailController,
-                    hintText: 'NUSNET ID (e.g. E0123456)',
-                  ),
-                ),
-                SizedBox(height: 16),
-                SizedBox(
-                  width: 300,
-                  child: AuthTextField(
-                    controller: passwordController,
-                    hintText: 'Password',
+                    controller: facultyController,
+                    hintText: 'Faculty',
                     obscureText: true,
                   ),
                 ),
@@ -97,18 +110,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(
                   width: 300,
                   child: AuthTextField(
-                    controller: confirmPasswordController,
-                    hintText: 'Confirm password',
+                    controller: majorController,
+                    hintText: 'Major',
                     obscureText: true,
                   ),
                 ),
                 SizedBox(height: 35),
                 PrimaryButton(
-                  label: "Register",
+                  label: "Next",
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ProfileSetup1Screen()),
+                      MaterialPageRoute(builder: (context) => ProfileSetup2Screen()),
                     );
                   },
                 ),
@@ -118,15 +131,5 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ],
       ),
     );
-  }
-
-  void signUp() {
-    if (passwordController.text != confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Passwords do not match!')),
-      );
-      return;
-    }
-    // TODO: implement after connecting API
   }
 }

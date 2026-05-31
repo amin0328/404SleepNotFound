@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/features/auth/landing_screen.dart';
 import 'package:mobile/shared/widgets/auth_text_field.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
 import 'package:mobile/shared/widgets/app_background.dart';
@@ -31,12 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LandingScreen()),
-                );
-              },
+              onPressed: () => Navigator.pop(context),
               child: Image.asset(
                 'assets/images/backbutton.png',
                 width: 50,
@@ -54,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 top: 160
               ),
               child: Text(
-                'Welcome\nBack!',
+                'Welcome\nback!',
                 style: TextStyle(
                   fontFamily: "Jost",
                   fontWeight: FontWeight.w600,
@@ -75,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 300,
                   child: AuthTextField(
                     controller: emailController,
-                    hintText: 'Enter your email',
+                    hintText: 'Enter your NUSNET ID',
                   ),
                 ),
                 SizedBox(height: 16),
@@ -87,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                   ),
                 ),
-                SizedBox(height: 24),
+                SizedBox(height: 35),
                 PrimaryButton(
                   label: "Login",
                   onPressed: () {},

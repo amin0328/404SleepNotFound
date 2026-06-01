@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 300,
                   child: AuthTextField(
                     controller: emailController,
-                    hintText: 'Enter your NUSNET ID',
+                    hintText: 'Enter your NUS Email (E.g. e0123456@u.nus.edu)',
                   ),
                 ),
                 SizedBox(height: 16),

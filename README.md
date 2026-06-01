@@ -4,7 +4,7 @@
 
 **Team:** 404 Sleep Not Found | Orbital 26 — Apollo 11  
 **Members:** Amin (Frontend) · Kar Mun (Backend) 
-**Github repository link:** https://github.com/amin0328/404SleepNotFound  
+**Github repository link:** https://github.com/amin0328/404SleepNotFound 
 **Stack:** Flutter · Node.js/TypeScript · PostgreSQL · Railway · Render 
 
 ---

@@ -84,6 +84,10 @@ Auto-created group chats on buddy match or group order join. Push notifications 
 
 ## System Design
 
+### Prototype
+<img width="1355" height="413" alt="Screenshot 2026-06-01 at 2 27 48 PM" src="https://github.com/user-attachments/assets/ea48e429-88a5-4169-9016-7b9332612364" />
+
+
 ### Architecture
 
 ```

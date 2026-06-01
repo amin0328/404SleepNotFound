@@ -3,8 +3,8 @@
 > A unified mobile platform for international students at NUS — manage deadlines, find housing, connect with peers, and split group orders, all in one place.
 
 **Team:** 404 Sleep Not Found | Orbital 26 — Apollo 11  
-**Members:** Amin (Frontend) · Kar Mun (Backend) 
-**Github repository link:** https://github.com/amin0328/404SleepNotFound 
+**Members:** Amin (Frontend) · Kar Mun (Backend)  
+**Github repository link:** https://github.com/amin0328/404SleepNotFound  
 **Stack:** Flutter · Node.js/TypeScript · PostgreSQL · Railway · Render 
 
 ---

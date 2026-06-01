@@ -1,4 +1,4 @@
-import { pool } from '../config/db';
+import pool from '../config/db';
 
 export function getUrgency(dueDate: string): 'green' | 'amber' | 'red' {
   const days = Math.ceil(

@@ -1,4 +1,4 @@
-import { pool } from '../config/db';
+import pool from '../config/db';
 import { compatibilityScore } from './matching.service';
 
 export async function getPosts(category?: string) {

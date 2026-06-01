@@ -1,4 +1,4 @@
-import { pool } from '../config/db';
+import pool from '../config/db';
 
 export async function getListings(filters: {
   min_price?: number;

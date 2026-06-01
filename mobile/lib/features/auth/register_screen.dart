@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/core/auth/auth_service.dart';
 import 'package:mobile/features/profile/screens/profile_setup1_screen.dart';
 import 'package:mobile/shared/widgets/auth_text_field.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
@@ -13,9 +14,11 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController nusnetIdController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
+
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -80,8 +83,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(
                   width: 300,
                   child: AuthTextField(
-                    controller: emailController,
-                    hintText: 'NUSNET ID (e.g. E0123456)',
+                    controller: nusnetIdController,
+                    hintText: 'NUSNET ID (e.g. e0123456)',
                   ),
                 ),
                 SizedBox(height: 16),
@@ -103,15 +106,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 SizedBox(height: 35),
-                PrimaryButton(
-                  label: "Register",
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ProfileSetup1Screen()),
-                    );
-                  },
-                ),
+                _isLoading
+                  ? CircularProgressIndicator()
+                  : PrimaryButton(
+                      label: "Register",
+                      onPressed: signUp,
+                    ),
               ],
             ),
           )
@@ -120,13 +120,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void signUp() {
+  void signUp() async {
     if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Passwords do not match!')),
       );
       return;
     }
-    // TODO: implement after connecting API
+
+    final nusnetId = nusnetIdController.text.trim().toLowerCase();
+    final email = '$nusnetId@u.nus.edu';
+
+    setState(() => _isLoading = true);
+
+    try {
+      await AuthService.register(
+        nusnetId: nusnetId,
+        name: fullNameController.text.trim(),
+        email: email,
+        password: passwordController.text.trim(),
+      );
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ProfileSetup1Screen()),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration failed. Please try again.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:mobile/core/auth/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile/shared/widgets/auth_text_field.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
@@ -84,7 +85,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: 35),
                 PrimaryButton(
                   label: "Login",
-                  onPressed: () {},
+                  onPressed: () async {
+                    try {
+                      await AuthService.login(
+                        email: emailController.text.trim(),
+                        password: passwordController.text.trim(),
+                      );
+                      if (context.mounted) {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Login failed. Check your credentials.')),
+                        );
+                      }
+                    }
+                  },
                 ),
               ],
             ),

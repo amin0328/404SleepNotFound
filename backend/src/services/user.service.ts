@@ -1,4 +1,4 @@
-import { pool } from '../config/db';
+import pool from '../config/db';
 
 export async function getProfile(userId: string) {
   const result = await pool.query(

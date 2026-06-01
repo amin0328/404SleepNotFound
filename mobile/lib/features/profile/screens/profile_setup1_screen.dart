@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/core/constants/nus_data.dart';
 import 'package:mobile/shared/widgets/auth_text_field.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
 import 'package:mobile/shared/widgets/app_background.dart';
@@ -13,8 +14,19 @@ class ProfileSetup1Screen extends StatefulWidget {
 
 class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
   final TextEditingController gradYearController = TextEditingController();
-  final TextEditingController facultyController = TextEditingController();
-  final TextEditingController majorController = TextEditingController();
+  String? selectedFaculty;
+  String? selectedMajor;
+
+  InputDecoration _inputDecoration() {
+    return InputDecoration(
+      filled: true,
+      fillColor: Color(0xffE4E4E4),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,17 +36,12 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
         children: [
           AppBackground(),
           Positioned(
-            top: 90,
-            left: 20,
+            top: 90, left: 20,
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-              ),
+              style: ElevatedButton.styleFrom(padding: EdgeInsets.zero, backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
               onPressed: () => Navigator.pop(context),
               child: Image.asset('assets/images/backbutton.png', width: 50),
-            )
+            ),
           ),
           Positioned(
             top: 0, left: 0, right: 0,
@@ -59,39 +66,58 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
           Positioned(
             top: MediaQuery.of(context).size.height * 0.32 + 72 + 16,
             left: 0, right: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 300,
-                  child: AuthTextField(controller: gradYearController, hintText: 'Graduating Year (e.g. 2028)'),
+            child: Center(
+              child: SizedBox(
+                width: 300,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AuthTextField(
+                      controller: gradYearController,
+                      hintText: 'Graduating Year (e.g. 2028)',
+                    ),
+                    SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      menuMaxHeight: 300,
+                      hint: Text('Faculty', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                      value: selectedFaculty,
+                      onChanged: (v) => setState(() {
+                        selectedFaculty = v;
+                        selectedMajor = null;
+                      }),
+                      items: facultyMajors.keys.map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
+                      decoration: _inputDecoration(),
+                    ),
+                    SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      menuMaxHeight: 300,
+                      hint: Text('Major', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                      value: selectedMajor,
+                      onChanged: selectedFaculty == null ? null : (v) => setState(() => selectedMajor = v),
+                      items: (selectedFaculty != null ? facultyMajors[selectedFaculty]! : <String>[])
+                          .map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                      decoration: _inputDecoration(),
+                    ),
+                    SizedBox(height: 35),
+                    PrimaryButton(
+                      label: "Next",
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ProfileSetup2Screen(
+                            gradYear: int.tryParse(gradYearController.text.trim()) ?? 0,
+                            major: selectedMajor ?? '',
+                          )),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                SizedBox(height: 16),
-                SizedBox(
-                  width: 300,
-                  child: AuthTextField(controller: facultyController, hintText: 'Faculty'),
-                ),
-                SizedBox(height: 16),
-                SizedBox(
-                  width: 300,
-                  child: AuthTextField(controller: majorController, hintText: 'Major'),
-                ),
-                SizedBox(height: 35),
-                PrimaryButton(
-                  label: "Next",
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ProfileSetup2Screen(
-                        gradYear: int.tryParse(gradYearController.text.trim()) ?? 0,
-                        major: majorController.text.trim(),
-                      )),
-                    );
-                  },
-                ),
-              ],
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

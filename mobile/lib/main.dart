@@ -1,9 +1,11 @@
-// mobile/lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/auth/landing_screen.dart';
+import 'package:mobile/features/home/home_screen.dart';
+import 'package:mobile/core/api/api_client.dart';
 
 void main() {
+  ApiClient.init();
   runApp(
     const ProviderScope(
       child: NusHubApp(),
@@ -23,7 +25,11 @@ class NusHubApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF003D7C)),
         useMaterial3: true,
       ),
-      home: const LandingScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LandingScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }

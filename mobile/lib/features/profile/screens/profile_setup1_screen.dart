@@ -33,87 +33,48 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
                 shadowColor: Colors.transparent,
               ),
               onPressed: () => Navigator.pop(context),
-              child: Image.asset(
-                'assets/images/backbutton.png',
-                width: 50,
-              ),
+              child: Image.asset('assets/images/backbutton.png', width: 50),
             )
           ),
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
+            top: 0, left: 0, right: 0,
             height: MediaQuery.of(context).size.height * 0.45,
             child: Padding(
-              padding: EdgeInsets.only(
-                left: (MediaQuery.of(context).size.width - 300) / 2, 
-                top: 160
-              ),
-              child: Text(
-                'Glad to\nmeet you!',
-                style: TextStyle(
-                  fontFamily: "Jost",
-                  fontWeight: FontWeight.w600,
-                  fontSize: 48,
-                  color: Colors.white,
-                  height: 1.1,
-                ),
+              padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width - 300) / 2, top: 160),
+              child: Text('Glad to\nmeet you!',
+                style: TextStyle(fontFamily: "Jost", fontWeight: FontWeight.w600, fontSize: 48, color: Colors.white, height: 1.1),
               ),
             ),
           ),
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
+            top: 0, left: 0, right: 0,
             height: MediaQuery.of(context).size.height * 0.45,
             child: Padding(
-              padding: EdgeInsets.only(
-                left: (MediaQuery.of(context).size.width - 300) / 2, 
-                top: 290
-              ),
-              child: Text(
-                'Tell us a bit about yourself.',
-                style: TextStyle(
-                  fontFamily: "Jost",
-                  fontWeight: FontWeight.w600,
-                  fontSize: 24,
-                  color: Color(0xff001743),
-                  height: 1.1,
-                ),
+              padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width - 300) / 2, top: 290),
+              child: Text('Tell us a bit about yourself.',
+                style: TextStyle(fontFamily: "Jost", fontWeight: FontWeight.w600, fontSize: 24, color: Color(0xff001743), height: 1.1),
               ),
             ),
           ),
           Positioned(
             top: MediaQuery.of(context).size.height * 0.32 + 72 + 16,
-            left: 0,
-            right: 0,
+            left: 0, right: 0,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
                   width: 300,
-                  child: AuthTextField(
-                    controller: gradYearController,
-                    hintText: 'Graduating Year (e.g. 2028)',
-                  ),
+                  child: AuthTextField(controller: gradYearController, hintText: 'Graduating Year (e.g. 2028)'),
                 ),
                 SizedBox(height: 16),
                 SizedBox(
                   width: 300,
-                  child: AuthTextField(
-                    controller: facultyController,
-                    hintText: 'Faculty',
-                    obscureText: true,
-                  ),
+                  child: AuthTextField(controller: facultyController, hintText: 'Faculty'),
                 ),
                 SizedBox(height: 16),
                 SizedBox(
                   width: 300,
-                  child: AuthTextField(
-                    controller: majorController,
-                    hintText: 'Major',
-                    obscureText: true,
-                  ),
+                  child: AuthTextField(controller: majorController, hintText: 'Major'),
                 ),
                 SizedBox(height: 35),
                 PrimaryButton(
@@ -121,7 +82,10 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ProfileSetup2Screen()),
+                      MaterialPageRoute(builder: (context) => ProfileSetup2Screen(
+                        gradYear: int.tryParse(gradYearController.text.trim()) ?? 0,
+                        major: majorController.text.trim(),
+                      )),
                     );
                   },
                 ),

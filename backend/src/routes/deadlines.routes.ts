@@ -1,12 +1,17 @@
 import { Router } from 'express';
+import {
+  getDeadlines,
+  createDeadline,
+  updateDeadline,
+  deleteDeadline,
+} from '../controllers/deadline.controller';
 import { requireAuth } from '../middleware/auth';
-import * as DeadlineController from '../controllers/deadline.controller';
 
 const router = Router();
 
-router.get('/',      requireAuth, DeadlineController.getDeadlines);
-router.post('/',     requireAuth, DeadlineController.createDeadline);
-router.patch('/:id', requireAuth, DeadlineController.updateDeadline);
-router.delete('/:id',requireAuth, DeadlineController.deleteDeadline);
+router.get('/',     requireAuth, getDeadlines);
+router.post('/',    requireAuth, createDeadline);
+router.patch('/:id', requireAuth, updateDeadline);
+router.delete('/:id', requireAuth, deleteDeadline);
 
 export default router;

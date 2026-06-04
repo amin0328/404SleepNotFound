@@ -8,6 +8,7 @@ import listingRoutes from './routes/listings.routes';
 import authRoutes from './routes/auth.routes';
 import postRoutes from './routes/posts.routes';
 import userRoutes from './routes/users.routes';
+import currencyRoutes from './routes/currency.routes';
 
 const app = express();
 
@@ -24,7 +25,7 @@ app.use('/v1/listings', listingRoutes);
 app.use('/v1/auth', authRoutes);
 app.use('/v1/posts', postRoutes);
 app.use('/v1/users', userRoutes);
-
 app.use(errorHandler);
+app.use('/v1/currency', currencyRoutes);
 
 export default app;

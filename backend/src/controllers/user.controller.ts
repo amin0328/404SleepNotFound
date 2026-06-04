@@ -160,4 +160,5 @@ function validateLifestyle(l: Record<string, unknown>): string | null {
     return 'lifestyle.social must be "introvert" or "extrovert".';
 
   return null;
+
 }

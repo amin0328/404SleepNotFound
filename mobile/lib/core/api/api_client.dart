@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
 class ApiClient {
-  static const String baseUrl = 'http://localhost:3000/v1';
+  static const String baseUrl = 'https://nusphere-backend.onrender.com/v1';
   static String? _token;
   static String? get token => _token;
 

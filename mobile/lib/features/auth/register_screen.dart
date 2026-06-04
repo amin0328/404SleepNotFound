@@ -149,7 +149,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration failed. Please try again.')),
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
         );
       }
     } finally {

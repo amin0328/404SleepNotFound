@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../api/api_client.dart';
 
 class AuthService {
@@ -5,12 +6,17 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final res = await ApiClient.dio.post('/auth/login', data: {
-      'email': email,
-      'password': password,
-    });
-    ApiClient.setToken(res.data['token']);
-    return res.data;
+    try {
+      final res = await ApiClient.dio.post('/auth/login', data: {
+        'email': email,
+        'password': password,
+      });
+      ApiClient.setToken(res.data['token']);
+      return res.data;
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Login failed. Please try again.';
+      throw Exception(message);
+    }
   }
 
   static Future<Map<String, dynamic>> register({
@@ -19,14 +25,19 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final res = await ApiClient.dio.post('/auth/register', data: {
-      'nusnet_id': nusnetId,
-      'name': name,
-      'email': email,
-      'password': password,
-    });
-    ApiClient.setToken(res.data['token']);
-    return res.data;
+    try {
+      final res = await ApiClient.dio.post('/auth/register', data: {
+        'nusnet_id': nusnetId,
+        'name': name,
+        'email': email,
+        'password': password,
+      });
+      ApiClient.setToken(res.data['token']);
+      return res.data;
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Registration failed. Please try again.';
+      throw Exception(message);
+    }
   }
 
   static Future<void> logout() {
@@ -35,7 +46,11 @@ class AuthService {
   }
 
   static Future<void> updateProfile(Map<String, dynamic> data) async {
-    print('TOKEN: ${ApiClient.token}');
-    await ApiClient.dio.put('/users/me', data: data);
+    try {
+      await ApiClient.dio.put('/users/me', data: data);
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Failed to update profile.';
+      throw Exception(message);
+    }
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile/core/auth/auth_service.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
 import 'package:mobile/shared/widgets/app_background.dart';
+import 'package:mobile/core/api/api_client.dart';
 
 class ProfileSetup4Screen extends StatefulWidget {
   final int gradYear;
@@ -57,12 +58,47 @@ class _ProfileSetup4ScreenState extends State<ProfileSetup4Screen> {
     }
   }
 
+Future<void> _saveProfile() async {
+  if (selectedCountryCode == null || selectedCurrency == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please select your nationality and currency.')),
+    );
+    return;
+  }
+
+  setState(() => isSaving = true);
+
+  try {
+    print('TOKEN before save: ${ApiClient.token}'); // ← add this
+    await AuthService.updateProfile({
+      'grad_year': widget.gradYear,
+      'major': widget.major,
+      'dorm': widget.dorm,
+      'home_country': selectedCountryCode,
+      'home_currency': selectedCurrency,
+    });
+
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
+    }
+  } finally {
+    if (mounted) setState(() => isSaving = false);
+  }
+}
+
   List<String> get currencyList {
     final list = countries.map((c) => c['currency']!).toSet().where((c) => c.isNotEmpty).toList();
     list.sort();
     return list;
   }
-
+  
+/*
   Future<void> _saveProfile() async {
     if (selectedCountryCode == null || selectedCurrency == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -95,7 +131,7 @@ class _ProfileSetup4ScreenState extends State<ProfileSetup4Screen> {
       if (mounted) setState(() => isSaving = false);
     }
   }
-
+*/
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;

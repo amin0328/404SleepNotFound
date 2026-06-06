@@ -4,7 +4,7 @@ import {
   createDeadline,
   updateDeadline,
   deleteDeadline,
-} from '../controllers/deadline.controller';
+} from '../controllers/deadlines.controller';
 import { requireAuth } from '../middleware/auth';
 
 const router = Router();

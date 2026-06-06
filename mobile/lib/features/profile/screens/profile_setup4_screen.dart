@@ -61,7 +61,7 @@ class _ProfileSetup4ScreenState extends State<ProfileSetup4Screen> {
 Future<void> _saveProfile() async {
   if (selectedCountryCode == null || selectedCurrency == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Please select your nationality and currency.')),
+      const SnackBar(content: Text('Please select your nationality and currency.')),
     );
     return;
   }
@@ -140,13 +140,13 @@ Future<void> _saveProfile() async {
     return Scaffold(
       body: Stack(
         children: [
-          AppBackground(),
+          const AppBackground(),
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: EdgeInsets.only(top: 20, left: 20),
+                  padding: const EdgeInsets.only(top: 20, left: 20),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(padding: EdgeInsets.zero, backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
                     onPressed: () => Navigator.pop(context),
@@ -155,19 +155,19 @@ Future<void> _saveProfile() async {
                 ),
                 Padding(
                   padding: EdgeInsets.only(left: leftPadding, top: 40),
-                  child: Text('Almost\nDone.',
+                  child: const Text('Almost\nDone.',
                     style: TextStyle(fontFamily: 'Jost', fontWeight: FontWeight.w600, fontSize: 48, color: Colors.white, height: 1.1),
                   ),
                 ),
                 Padding(
                   padding: EdgeInsets.only(left: leftPadding, top: 12),
-                  child: Text("We'd love to know where\nyou call home.",
+                  child: const Text("We'd love to know where\nyou call home.",
                     style: TextStyle(fontFamily: 'Jost', fontWeight: FontWeight.w600, fontSize: 20, color: Color(0xff001743), height: 1.3),
                   ),
                 ),
-                SizedBox(height: 40),
+                const SizedBox(height: 40),
                 if (isLoading)
-                  Center(child: CircularProgressIndicator())
+                  const Center(child: CircularProgressIndicator())
                 else
                   Center(
                     child: SizedBox(
@@ -177,8 +177,8 @@ Future<void> _saveProfile() async {
                           DropdownButtonFormField<String>(
                             isExpanded: true,
                             menuMaxHeight: 300,
-                            hint: Text('Nationality', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
-                            value: selectedCountryCode,
+                            hint: const Text('Nationality', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                            initialValue: selectedCountryCode,
                             onChanged: (v) {
                               final country = countries.firstWhere((c) => c['code'] == v);
                               setState(() {
@@ -189,19 +189,19 @@ Future<void> _saveProfile() async {
                             items: countries.map((c) => DropdownMenuItem(value: c['code'], child: Text(c['name']!))).toList(),
                             decoration: _inputDecoration(),
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           DropdownButtonFormField<String>(
                             isExpanded: true,
                             menuMaxHeight: 300,
-                            hint: Text('Home Currency', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
-                            value: selectedCurrency,
+                            hint: const Text('Home Currency', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                            initialValue: selectedCurrency,
                             onChanged: (v) => setState(() => selectedCurrency = v),
                             items: currencyList.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                             decoration: _inputDecoration(),
                           ),
-                          SizedBox(height: 35),
+                          const SizedBox(height: 35),
                           isSaving
-                            ? CircularProgressIndicator()
+                            ? const CircularProgressIndicator()
                             : PrimaryButton(label: 'Finish', onPressed: _saveProfile),
                         ],
                       ),
@@ -217,11 +217,11 @@ Future<void> _saveProfile() async {
 
   InputDecoration _inputDecoration() {
     return InputDecoration(
-      filled: true, fillColor: Color(0xffE4E4E4),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      filled: true, fillColor: const Color(0xffE4E4E4),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
     );
   }
 }

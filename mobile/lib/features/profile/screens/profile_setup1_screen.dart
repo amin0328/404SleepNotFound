@@ -20,11 +20,11 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
   InputDecoration _inputDecoration() {
     return InputDecoration(
       filled: true,
-      fillColor: Color(0xffE4E4E4),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      fillColor: const Color(0xffE4E4E4),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
     );
   }
 
@@ -34,7 +34,7 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
       body: Stack(
         alignment: Alignment.center,
         children: [
-          AppBackground(),
+          const AppBackground(),
           Positioned(
             top: 90, left: 20,
             child: ElevatedButton(
@@ -48,7 +48,7 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
             height: MediaQuery.of(context).size.height * 0.45,
             child: Padding(
               padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width - 300) / 2, top: 160),
-              child: Text('Glad to\nmeet you!',
+              child: const Text('Glad to\nmeet you!',
                 style: TextStyle(fontFamily: "Jost", fontWeight: FontWeight.w600, fontSize: 48, color: Colors.white, height: 1.1),
               ),
             ),
@@ -58,7 +58,7 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
             height: MediaQuery.of(context).size.height * 0.45,
             child: Padding(
               padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width - 300) / 2, top: 290),
-              child: Text('Tell us a bit about yourself.',
+              child: const Text('Tell us a bit about yourself.',
                 style: TextStyle(fontFamily: "Jost", fontWeight: FontWeight.w600, fontSize: 24, color: Color(0xff001743), height: 1.1),
               ),
             ),
@@ -76,12 +76,12 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
                       controller: gradYearController,
                       hintText: 'Graduating Year (e.g. 2028)',
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       isExpanded: true,
                       menuMaxHeight: 300,
-                      hint: Text('Faculty', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
-                      value: selectedFaculty,
+                      hint: const Text('Faculty', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                      initialValue: selectedFaculty,
                       onChanged: (v) => setState(() {
                         selectedFaculty = v;
                         selectedMajor = null;
@@ -89,18 +89,18 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
                       items: facultyMajors.keys.map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
                       decoration: _inputDecoration(),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       isExpanded: true,
                       menuMaxHeight: 300,
-                      hint: Text('Major', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
-                      value: selectedMajor,
+                      hint: const Text('Major', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                      initialValue: selectedMajor,
                       onChanged: selectedFaculty == null ? null : (v) => setState(() => selectedMajor = v),
                       items: (selectedFaculty != null ? facultyMajors[selectedFaculty]! : <String>[])
                           .map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                       decoration: _inputDecoration(),
                     ),
-                    SizedBox(height: 35),
+                    const SizedBox(height: 35),
                     PrimaryButton(
                       label: "Next",
                       onPressed: () {

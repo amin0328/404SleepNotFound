@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         alignment: Alignment.center,
         children: [
-          AppBackground(),
+          const AppBackground(),
           Positioned(
             top: 90,
             left: 20,
@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 left: (MediaQuery.of(context).size.width - 300) / 2, 
                 top: 160
               ),
-              child: Text(
+              child: const Text(
                 'Welcome\nback!',
                 style: TextStyle(
                   fontFamily: "Jost",
@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     hintText: 'Enter your NUS Email (E.g. e0123456@u.nus.edu)',
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: 300,
                   child: AuthTextField(
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                   ),
                 ),
-                SizedBox(height: 35),
+                const SizedBox(height: 35),
                 PrimaryButton(
                   label: "Login",
                   onPressed: () async {

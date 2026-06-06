@@ -28,11 +28,11 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
   InputDecoration _inputDecoration() {
     return InputDecoration(
       filled: true,
-      fillColor: Color(0xffE4E4E4),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      fillColor: const Color(0xffE4E4E4),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
     );
   }
 
@@ -42,7 +42,7 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
       body: Stack(
         alignment: Alignment.center,
         children: [
-          AppBackground(),
+          const AppBackground(),
           Positioned(
             top: 90, left: 20,
             child: ElevatedButton(
@@ -56,7 +56,7 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
             height: MediaQuery.of(context).size.height * 0.45,
             child: Padding(
               padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width - 300) / 2, top: 160),
-              child: Text('Anything\nelse?',
+              child: const Text('Anything\nelse?',
                 style: TextStyle(fontFamily: "Jost", fontWeight: FontWeight.w600, fontSize: 48, color: Colors.white, height: 1.1),
               ),
             ),
@@ -66,7 +66,7 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
             height: MediaQuery.of(context).size.height * 0.45,
             child: Padding(
               padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width - 300) / 2, top: 290),
-              child: Text('Add a second major, minor,\nor DDP if you have one.',
+              child: const Text('Add a second major, minor,\nor DDP if you have one.',
                 style: TextStyle(fontFamily: "Jost", fontWeight: FontWeight.w600, fontSize: 24, color: Color(0xff001743), height: 1.1),
               ),
             ),
@@ -83,18 +83,18 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
                   children: [
                     DropdownButtonFormField<String>(
                       isExpanded: true,
-                      hint: Text('Type', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
-                      value: selectedType,
+                      hint: const Text('Type', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                      initialValue: selectedType,
                       onChanged: (v) => setState(() => selectedType = v),
                       items: types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                       decoration: _inputDecoration(),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       isExpanded: true,
                       menuMaxHeight: 300,
-                      hint: Text('Faculty', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
-                      value: selectedFaculty,
+                      hint: const Text('Faculty', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                      initialValue: selectedFaculty,
                       onChanged: (v) => setState(() {
                         selectedFaculty = v;
                         selectedMajor = null;
@@ -102,18 +102,18 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
                       items: facultyMajors.keys.map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
                       decoration: _inputDecoration(),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       isExpanded: true,
                       menuMaxHeight: 300,
-                      hint: Text('Major', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
-                      value: selectedMajor,
+                      hint: const Text('Major', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                      initialValue: selectedMajor,
                       onChanged: selectedFaculty == null ? null : (v) => setState(() => selectedMajor = v),
                       items: (selectedFaculty != null ? facultyMajors[selectedFaculty]! : <String>[])
                           .map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                       decoration: _inputDecoration(),
                     ),
-                    SizedBox(height: 35),
+                    const SizedBox(height: 35),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -124,7 +124,7 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
                               major: widget.major,
                             ),
                           )),
-                          child: Text('Skip', style: TextStyle(fontFamily: 'Jost', fontWeight: FontWeight.w600, fontSize: 18, color: Color(0xff001743))),
+                          child: const Text('Skip', style: TextStyle(fontFamily: 'Jost', fontWeight: FontWeight.w600, fontSize: 18, color: Color(0xff001743))),
                         ),
                         SmallButton(
                           label: "Next",

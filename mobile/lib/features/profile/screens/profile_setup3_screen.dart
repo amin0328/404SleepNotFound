@@ -38,7 +38,7 @@ class _ProfileSetup3ScreenState extends State<ProfileSetup3Screen> {
       body: Stack(
         alignment: Alignment.center,
         children: [
-          AppBackground(),
+          const AppBackground(),
           Positioned(
             top: 90, left: 20,
             child: ElevatedButton(
@@ -52,7 +52,7 @@ class _ProfileSetup3ScreenState extends State<ProfileSetup3Screen> {
             height: screenHeight * 0.45,
             child: Padding(
               padding: EdgeInsets.only(left: leftPadding, top: 160),
-              child: Text('Got a place\nto stay?',
+              child: const Text('Got a place\nto stay?',
                 style: TextStyle(fontFamily: 'Jost', fontWeight: FontWeight.w600, fontSize: 48, color: Colors.white, height: 1.1),
               ),
             ),
@@ -62,7 +62,7 @@ class _ProfileSetup3ScreenState extends State<ProfileSetup3Screen> {
             height: screenHeight * 0.45,
             child: Padding(
               padding: EdgeInsets.only(left: leftPadding, top: 290),
-              child: Text("Let us know where you're\nliving in Singapore.",
+              child: const Text("Let us know where you're\nliving in Singapore.",
                 style: TextStyle(fontFamily: 'Jost', fontWeight: FontWeight.w600, fontSize: 20, color: Color(0xff001743), height: 1.3),
               ),
             ),
@@ -84,10 +84,10 @@ class _ProfileSetup3ScreenState extends State<ProfileSetup3Screen> {
                           child: Text('On-campus',
                             style: TextStyle(fontFamily: 'Jost', fontSize: 18,
                               fontWeight: selectedHousing == 'on-campus' ? FontWeight.w700 : FontWeight.w400,
-                              color: selectedHousing == 'on-campus' ? Color(0xff001743) : Colors.grey),
+                              color: selectedHousing == 'on-campus' ? const Color(0xff001743) : Colors.grey),
                           ),
                         ),
-                        Padding(
+                        const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),
                           child: Text('/', style: TextStyle(fontSize: 18, color: Colors.grey)),
                         ),
@@ -96,26 +96,26 @@ class _ProfileSetup3ScreenState extends State<ProfileSetup3Screen> {
                           child: Text('Off-campus',
                             style: TextStyle(fontFamily: 'Jost', fontSize: 18,
                               fontWeight: selectedHousing == 'off-campus' ? FontWeight.w700 : FontWeight.w400,
-                              color: selectedHousing == 'off-campus' ? Color(0xff001743) : Colors.grey),
+                              color: selectedHousing == 'off-campus' ? const Color(0xff001743) : Colors.grey),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     if (selectedHousing == 'on-campus')
                       DropdownButtonFormField<String>(
-                        hint: Text('Hostel', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
-                        value: selectedDorm,
+                        hint: const Text('Hostel', style: TextStyle(fontFamily: 'Jost', fontSize: 18, color: Colors.grey)),
+                        initialValue: selectedDorm,
                         onChanged: (v) => setState(() => selectedDorm = v),
                         items: dorms.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
                         decoration: InputDecoration(
-                          filled: true, fillColor: Color(0xffE4E4E4),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Color(0xffACACAC), width: 0.3)),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                          filled: true, fillColor: const Color(0xffE4E4E4),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xffACACAC), width: 0.3)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                         ),
                       ),
-                    SizedBox(height: 35),
+                    const SizedBox(height: 35),
                     PrimaryButton(
                       label: 'Next',
                       onPressed: () => Navigator.push(context, MaterialPageRoute(

@@ -13,7 +13,7 @@ class LandingScreen extends StatelessWidget {
       body: Stack(
         alignment: Alignment.center,
         children: [
-          AppBackground(),
+          const AppBackground(),
           Center(
             child: Image.asset('assets/images/NUSphere_shadow3.png', width: 300,
             ),
@@ -25,7 +25,7 @@ class LandingScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
               },
             ),
@@ -35,12 +35,12 @@ class LandingScreen extends StatelessWidget {
             child: PrimaryButton(
               label: "Register",
               backgroundColor: Colors.white,
-              foregroundColor: Color(0xff001743),
-              borderColor: Color(0xff001743),
+              foregroundColor: const Color(0xff001743),
+              borderColor: const Color(0xff001743),
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => RegisterScreen()),
+                  MaterialPageRoute(builder: (context) => const RegisterScreen()),
                 );
               },
             ),

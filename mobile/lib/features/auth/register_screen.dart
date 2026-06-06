@@ -26,7 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Stack(
         alignment: Alignment.center,
         children: [
-          AppBackground(),
+          const AppBackground(),
           Positioned(
             top: 90,
             left: 20,
@@ -53,7 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 left: (MediaQuery.of(context).size.width - 300) / 2, 
                 top: 160
               ),
-              child: Text(
+              child: const Text(
                 'Registration',
                 style: TextStyle(
                   fontFamily: "Jost",
@@ -79,7 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     hintText: 'Full name',
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: 300,
                   child: AuthTextField(
@@ -87,7 +87,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     hintText: 'NUSNET ID (e.g. e0123456)',
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: 300,
                   child: AuthTextField(
@@ -96,7 +96,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: true,
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: 300,
                   child: AuthTextField(
@@ -105,9 +105,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: true,
                   ),
                 ),
-                SizedBox(height: 35),
+                const SizedBox(height: 35),
                 _isLoading
-                  ? CircularProgressIndicator()
+                  ? const CircularProgressIndicator()
                   : PrimaryButton(
                       label: "Register",
                       onPressed: signUp,
@@ -123,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void signUp() async {
     if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Passwords do not match!')),
+        const SnackBar(content: Text('Passwords do not match!')),
       );
       return;
     }
@@ -143,7 +143,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (context.mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProfileSetup1Screen()),
+          MaterialPageRoute(builder: (context) => const ProfileSetup1Screen()),
         );
       }
     } catch (e) {

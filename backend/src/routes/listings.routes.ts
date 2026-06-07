@@ -1,10 +1,19 @@
 import { Router } from 'express';
+import {
+  getListings,
+  getSavedListings,
+  getListingById,
+  saveListing,
+  unsaveListing,
+} from '../controllers/listing.controller';
 import { requireAuth } from '../middleware/auth';
-import * as ListingController from '../controllers/listing.controller';
 
 const router = Router();
 
-router.get('/',     requireAuth, ListingController.getListings);
-router.get('/:id',  requireAuth, ListingController.getListingById);
+router.get('/',          requireAuth, getListings);
+router.get('/saved',     requireAuth, getSavedListings);  // must be before /:id
+router.get('/:id',       requireAuth, getListingById);
+router.post('/:id/save', requireAuth, saveListing);
+router.delete('/:id/save', requireAuth, unsaveListing);
 
 export default router;

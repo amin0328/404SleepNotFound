@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer';
+import * as cheerio from 'cheerio';
 import pool from '../config/db';
 
 interface ScrapedListing {
@@ -9,72 +9,88 @@ interface ScrapedListing {
   room: string | null;
   lease_months: number | null;
   url: string;
-  available_from: string | null;
 }
 
 export async function scrapeSRX(): Promise<void> {
   console.log('[scraper] Starting SRX scrape...');
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
-
   try {
-    const page = await browser.newPage();
-
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    );
-
-    const url = 'https://www.srx.com.sg/rent/hdb?district=D05,D10,D11&minprice=500&maxprice=2000';
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-
-    await page.waitForSelector('.listing-card, .property-card', { timeout: 10000 }).catch(() => {
-      console.log('[scraper] Selector not found — SRX may have changed their HTML');
+    const response = await fetch('https://www.srx.com.sg/rent/hdb?district=D05,D10,D11&minprice=500&maxprice=2000', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
     });
 
-    const listings: ScrapedListing[] = await page.evaluate(() => {
-      const cards = document.querySelectorAll('.listing-card, .property-card');
-      const results: ScrapedListing[] = [];
+    if (!response.ok) {
+      console.error(`[scraper] HTTP ${response.status} from SRX`);
+      return;
+    }
 
-      cards.forEach((card) => {
-        try {
-          const title = card.querySelector('.listing-title, h3')?.textContent?.trim() ?? '';
-          const priceText = card.querySelector('.listing-price, .price')?.textContent ?? '';
-          const price = parseInt(priceText.replace(/[^0-9]/g, ''), 10);
-          const location = card.querySelector('.listing-location, .location')?.textContent?.trim() ?? '';
-          const link = card.querySelector('a')?.getAttribute('href') ?? '';
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    const listings: ScrapedListing[] = [];
 
-          if (title && price && location) {
-            results.push({
-              title,
-              price_sgd: price,
-              location,
-              type: 'HDB',
-              room: null,
-              lease_months: 12,
-              url: link.startsWith('http') ? link : `https://www.srx.com.sg${link}`,
-              available_from: null,
-            });
-          }
-        } catch {}
-      });
+    // Try multiple selectors since SRX may change their HTML
+    const cardSelectors = [
+      '.listing-card',
+      '.property-card', 
+      '[class*="listing"]',
+      '[class*="property"]',
+    ];
 
-      return results;
+    let cards = $();
+    for (const selector of cardSelectors) {
+      cards = $(selector);
+      if (cards.length > 0) {
+        console.log(`[scraper] Found cards with selector: ${selector}`);
+        break;
+      }
+    }
+
+    if (cards.length === 0) {
+      // Log the page title to see what we got back
+      const title = $('title').text();
+      console.log(`[scraper] No cards found. Page title: "${title}"`);
+      console.log('[scraper] SRX may be blocking requests or changed their HTML structure');
+      return;
+    }
+
+    cards.each((_, el) => {
+      try {
+        const card = $(el);
+        const title = card.find('h3, .title, [class*="title"]').first().text().trim();
+        const priceText = card.find('[class*="price"]').first().text();
+        const price = parseInt(priceText.replace(/[^0-9]/g, ''), 10);
+        const location = card.find('[class*="location"], [class*="address"]').first().text().trim();
+        const link = card.find('a').first().attr('href') ?? '';
+
+        if (title && price && location && price > 0) {
+          listings.push({
+            title,
+            price_sgd: price,
+            location,
+            type: 'HDB',
+            room: null,
+            lease_months: 12,
+            url: link.startsWith('http') ? link : `https://www.srx.com.sg${link}`,
+          });
+        }
+      } catch {}
     });
 
-    console.log(`[scraper] Found ${listings.length} listings`);
+    console.log(`[scraper] Parsed ${listings.length} listings`);
 
     let inserted = 0;
     for (const listing of listings) {
       const existing = await pool.query('SELECT id FROM listings WHERE url = $1', [listing.url]);
       if (existing.rows.length === 0) {
         await pool.query(
-          `INSERT INTO listings (source, title, price_sgd, location, type, room, lease_months, url, available_from)
-           VALUES ('srx', $1, $2, $3, $4, $5, $6, $7, $8)`,
+          `INSERT INTO listings (source, title, price_sgd, location, type, room, lease_months, url)
+           VALUES ('srx', $1, $2, $3, $4, $5, $6, $7)`,
           [listing.title, listing.price_sgd, listing.location, listing.type,
-           listing.room, listing.lease_months, listing.url, listing.available_from],
+           listing.room, listing.lease_months, listing.url],
         );
         inserted++;
       }
@@ -83,7 +99,5 @@ export async function scrapeSRX(): Promise<void> {
     console.log(`[scraper] Inserted ${inserted} new listings`);
   } catch (err) {
     console.error('[scraper] Error:', err);
-  } finally {
-    await browser.close();
   }
 }

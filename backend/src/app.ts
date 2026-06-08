@@ -17,3 +17,11 @@ app.use('/v1/deadlines', deadlineRoutes);
 
 app.use(errorHandler);
 export default app;
+
+import { scrapeSRX } from './scraper/srx.scraper';
+
+// Temporary test route — remove after testing
+app.get('/v1/admin/scrape', async (req, res) => {
+  await scrapeSRX();
+  res.json({ message: 'Scrape triggered, check logs' });
+});

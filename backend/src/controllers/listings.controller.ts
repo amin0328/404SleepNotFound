@@ -29,12 +29,12 @@ export async function getListings(req: Request, res: Response): Promise<void> {
     }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-
     values.push(userId);
 
     const result = await pool.query(
       `SELECT l.id, l.source, l.title, l.price_sgd, l.location, l.type, l.room,
               l.lease_months, l.url, l.available_from, l.created_at,
+              l.posted_by,
               CASE WHEN sl.user_id IS NOT NULL THEN true ELSE false END AS is_saved
        FROM listings l
        LEFT JOIN saved_listings sl ON sl.listing_id = l.id AND sl.user_id = $${idx}
@@ -57,7 +57,7 @@ export async function getSavedListings(req: Request, res: Response): Promise<voi
     const result = await pool.query(
       `SELECT l.id, l.source, l.title, l.price_sgd, l.location, l.type, l.room,
               l.lease_months, l.url, l.available_from, l.created_at,
-              true AS is_saved
+              l.posted_by, true AS is_saved
        FROM listings l
        INNER JOIN saved_listings sl ON sl.listing_id = l.id
        WHERE sl.user_id = $1
@@ -80,6 +80,7 @@ export async function getListingById(req: Request, res: Response): Promise<void>
     const result = await pool.query(
       `SELECT l.id, l.source, l.title, l.price_sgd, l.location, l.type, l.room,
               l.lease_months, l.url, l.available_from, l.created_at,
+              l.posted_by,
               CASE WHEN sl.user_id IS NOT NULL THEN true ELSE false END AS is_saved
        FROM listings l
        LEFT JOIN saved_listings sl ON sl.listing_id = l.id AND sl.user_id = $2
@@ -99,6 +100,64 @@ export async function getListingById(req: Request, res: Response): Promise<void>
   }
 }
 
+export async function createListing(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as AuthRequest).userId!;
+    const { title, price_sgd, location, type, room, lease_months, url, available_from, notes } = req.body;
+
+    if (!title || !price_sgd || !location || !type) {
+      res.status(400).json({ error: 'title, price_sgd, location, and type are required.' });
+      return;
+    }
+
+    const result = await pool.query(
+      `INSERT INTO listings
+         (source, title, price_sgd, location, type, room, lease_months, url, available_from, notes, posted_by)
+       VALUES ('user', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING *`,
+      [
+        title.trim(),
+        Number(price_sgd),
+        location.trim(),
+        type.trim(),
+        room ?? null,
+        lease_months ?? null,
+        url ?? null,
+        available_from ?? null,
+        notes ?? null,
+        userId,
+      ],
+    );
+
+    res.status(201).json({ listing: result.rows[0] });
+  } catch (err) {
+    console.error('[createListing]', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+export async function deleteListing(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as AuthRequest).userId!;
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `DELETE FROM listings WHERE id = $1 AND posted_by = $2 RETURNING id`,
+      [id, userId],
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Listing not found or you are not the owner.' });
+      return;
+    }
+
+    res.json({ message: 'Listing deleted.', id });
+  } catch (err) {
+    console.error('[deleteListing]', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
 export async function saveListing(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as AuthRequest).userId!;
@@ -112,8 +171,7 @@ export async function saveListing(req: Request, res: Response): Promise<void> {
 
     await pool.query(
       `INSERT INTO saved_listings (user_id, listing_id)
-       VALUES ($1, $2)
-       ON CONFLICT DO NOTHING`,
+       VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [userId, id],
     );
 

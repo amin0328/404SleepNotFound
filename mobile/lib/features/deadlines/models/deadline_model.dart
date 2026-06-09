@@ -37,7 +37,7 @@ class DeadlineModel {
   factory DeadlineModel.fromJson(Map<String, dynamic> json) => DeadlineModel(
     id: json['id'].toString(),
     title: json['title'],
-    description: json['description'],
+    description: json['notes'],
     dueDate: DateTime.parse(json['due_date']),
     category: DeadlineCategory.values.firstWhere(
       (e) => e.name == json['category'],
@@ -47,7 +47,7 @@ class DeadlineModel {
 
   Map<String, dynamic> toJson() => {
     'title': title,
-    'description': description,
+    'notes': description,
     'due_date': dueDate.toIso8601String(),
     'category': category.name,
   };

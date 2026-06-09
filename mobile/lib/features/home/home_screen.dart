@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/core/auth/auth_service.dart';
 import 'package:mobile/features/deadlines/screens/deadline_screen.dart';
+import 'package:mobile/features/housing/screens/housing_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,7 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = const [
     DeadlineScreen(),
-    Placeholder(),
+    HousingScreen(),
     Placeholder(),
   ];
 

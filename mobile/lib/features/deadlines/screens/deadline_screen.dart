@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/deadline_model.dart';
+import '../services/deadline_service.dart';
 import '../widgets/deadline_card.dart';
 import '../widgets/deadline_modal.dart';
 
@@ -14,12 +15,26 @@ class DeadlineScreen extends StatefulWidget {
 class _DeadlineScreenState extends State<DeadlineScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  List<DeadlineModel> _deadlines = [];
+  bool _isLoading = true;
 
-  final List<DeadlineModel> _deadlines = [
-    DeadlineModel(id: '1', title: 'Visa Renewal', description: 'Immigration', dueDate: DateTime.now().add(const Duration(days: 4)), category: DeadlineCategory.visa),
-    DeadlineModel(id: '2', title: 'Course Registration', description: 'Academics', dueDate: DateTime.now().add(const Duration(days: 7)), category: DeadlineCategory.course),
-    DeadlineModel(id: '3', title: 'Lease Ends', description: 'Accommodation', dueDate: DateTime.now().add(const Duration(days: 17)), category: DeadlineCategory.lease),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadDeadlines();
+  }
+
+  Future<void> _loadDeadlines() async {
+    try {
+      final deadlines = await DeadlineService.getDeadlines();
+      setState(() {
+        _deadlines = deadlines;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
 
   List<DeadlineModel> _getDeadlinesForDay(DateTime day) =>
       _deadlines.where((d) => isSameDay(d.dueDate, day)).toList();
@@ -39,15 +54,15 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
       ),
       builder: (_) => DeadlineModal(
         existing: existing,
-        onSave: (deadline) {
-          setState(() {
-            if (existing == null) {
-              _deadlines.add(deadline);
-            } else {
-              final i = _deadlines.indexWhere((d) => d.id == existing.id);
-              if (i != -1) _deadlines[i] = deadline;
-            }
-          });
+        onSave: (deadline) async {
+          if (existing == null) {
+            final created = await DeadlineService.createDeadline(deadline);
+            setState(() => _deadlines.add(created));
+          } else {
+            final updated = await DeadlineService.updateDeadline(deadline);
+            final i = _deadlines.indexWhere((d) => d.id == existing.id);
+            if (i != -1) setState(() => _deadlines[i] = updated);
+          }
         },
       ),
     );
@@ -229,7 +244,14 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
                                   )),
                             ),
                             const SizedBox(height: 12),
-                            if (_visibleDeadlines.isEmpty)
+                            if (_isLoading)
+                              const Padding(
+                                padding: EdgeInsets.all(32),
+                                child: Center(
+                                  child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
+                                ),
+                              )
+                            else if (_visibleDeadlines.isEmpty)
                               Padding(
                                 padding: const EdgeInsets.all(32),
                                 child: Center(

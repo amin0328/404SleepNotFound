@@ -38,9 +38,7 @@ class ListingModel {
     propertyType: json['type'] ?? '',
     address: json['location'] ?? '',
     mrtInfo: '',
-    pricePerMonth: (json['price_sgd'] ?? 0) is int
-        ? json['price_sgd']
-        : (json['price_sgd'] as double).toInt(),
+    pricePerMonth: double.parse((json['price_sgd'] ?? 0).toString()).toInt(),
     roomType: json['room'] ?? '',
     leaseDuration: json['lease_months'] != null
         ? '${json['lease_months']} months'

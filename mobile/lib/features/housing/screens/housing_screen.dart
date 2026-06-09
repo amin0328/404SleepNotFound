@@ -27,12 +27,15 @@ class _HousingScreenState extends State<HousingScreen> {
 
   Future<void> _loadListings() async {
     try {
+      print('Loading listings...');
       final listings = await HousingService.getListings();
+      print('Listings count: ${listings.length}');
       setState(() {
         _listings = listings;
         _isLoading = false;
       });
     } catch (e) {
+      print('Housing error: $e');
       setState(() => _isLoading = false);
     }
   }

@@ -11,6 +11,7 @@ class AuthService {
         'email': email,
         'password': password,
       });
+      print('Login response: ${res.data}');
       ApiClient.setToken(res.data['token']);
       return res.data;
     } on DioException catch (e) {

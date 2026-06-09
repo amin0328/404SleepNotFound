@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/auth/landing_screen.dart';
+import 'package:mobile/features/auth/login_screen.dart';
+import 'package:mobile/features/auth/register_screen.dart';
 import 'package:mobile/features/home/home_screen.dart';
 import 'package:mobile/core/api/api_client.dart';
 
@@ -28,6 +30,8 @@ class NusHubApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const LandingScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
       },
     );

@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/users.routes';
 import deadlineRoutes from './routes/deadlines.routes';
 import listingRoutes from './routes/listings.routes';
+import orderRoutes from './routes/orders.routes';
 import postRoutes from './routes/posts.routes';
 import currencyRoutes from './routes/currency.routes';
 import { scrapeSRX } from './scraper/srx.scraper';
@@ -35,6 +36,7 @@ app.use('/v1/deadlines', deadlineRoutes);
 app.use('/v1/listings', listingRoutes);
 app.use('/v1/posts', postRoutes);
 app.use('/v1/currency', currencyRoutes);
+app.use('/v1/orders', orderRoutes);
 
 // Error handler must be last
 app.use(errorHandler);

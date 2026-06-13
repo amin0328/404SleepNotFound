@@ -1,13 +1,12 @@
 import { Router } from 'express';
+import { getPosts, createPost, expressInterest, toggleFavorite } from '../controllers/post.controller';
 import { requireAuth } from '../middleware/auth';
-import * as PostController from '../controllers/post.controller';
 
 const router = Router();
 
-router.get('/',           requireAuth, PostController.getPosts);
-router.post('/',          requireAuth, PostController.createPost);
-router.get('/:id',        requireAuth, PostController.getPostById);
-router.post('/:id/interest', requireAuth, PostController.expressInterest);
-router.post('/:id/favorite', requireAuth, PostController.toggleFavorite);
+router.get('/',                requireAuth, getPosts);
+router.post('/',               requireAuth, createPost);
+router.post('/:id/interest',   requireAuth, expressInterest);
+router.post('/:id/favorite',   requireAuth, toggleFavorite);
 
 export default router;

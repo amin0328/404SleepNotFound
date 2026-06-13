@@ -12,13 +12,12 @@ function getUrgency(dueDate: string): { score: number; label: string } {
   due.setHours(0, 0, 0, 0);
   const daysLeft = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (daysLeft < 0)  return { score: 5, label: 'overdue' };
-  if (daysLeft === 0) return { score: 4, label: 'due_today' };
-  if (daysLeft <= 3)  return { score: 3, label: 'urgent' };
-  if (daysLeft <= 7)  return { score: 2, label: 'upcoming' };
-  return { score: 1, label: 'future' };
+  if (daysLeft < 0)   return { score: 3, label: 'urgent' };   // overdue → red
+  if (daysLeft === 0) return { score: 3, label: 'urgent' };   // due today → red
+  if (daysLeft <= 3)  return { score: 3, label: 'urgent' };   // ≤3 days → red
+  if (daysLeft <= 10) return { score: 2, label: 'soon' };     // ≤10 days → yellow
+  return { score: 1, label: 'on_track' };                     // >10 days → green
 }
-
 // ─── GET /v1/deadlines ───────────────────────────────────────────────────────
 
 export async function getDeadlines(req: Request, res: Response): Promise<void> {

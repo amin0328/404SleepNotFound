@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mobile/core/auth/auth_service.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
 import 'package:mobile/shared/widgets/app_background.dart';
-import 'package:mobile/core/api/api_client.dart';
+import 'package:mobile/features/profile/screens/profile_setup5_screen.dart';
 
 class ProfileSetup4Screen extends StatefulWidget {
   final int gradYear;
@@ -58,38 +57,22 @@ class _ProfileSetup4ScreenState extends State<ProfileSetup4Screen> {
     }
   }
 
-Future<void> _saveProfile() async {
+void _goNext() {
   if (selectedCountryCode == null || selectedCurrency == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Please select your nationality and currency.')),
     );
     return;
   }
-
-  setState(() => isSaving = true);
-
-  try {
-    print('TOKEN before save: ${ApiClient.token}'); // ← add this
-    await AuthService.updateProfile({
-      'grad_year': widget.gradYear,
-      'major': widget.major,
-      'dorm': widget.dorm,
-      'home_country': selectedCountryCode,
-      'home_currency': selectedCurrency,
-    });
-
-    if (context.mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-    }
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-      );
-    }
-  } finally {
-    if (mounted) setState(() => isSaving = false);
-  }
+  Navigator.push(context, MaterialPageRoute(
+    builder: (context) => ProfileSetup5Screen(
+      gradYear: widget.gradYear,
+      major: widget.major,
+      dorm: widget.dorm,
+      homeCountry: selectedCountryCode!,
+      homeCurrency: selectedCurrency!,
+    ),
+  ));
 }
 
   List<String> get currencyList {
@@ -98,40 +81,6 @@ Future<void> _saveProfile() async {
     return list;
   }
   
-/*
-  Future<void> _saveProfile() async {
-    if (selectedCountryCode == null || selectedCurrency == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select your nationality and currency.')),
-      );
-      return;
-    }
-
-    setState(() => isSaving = true);
-
-    try {
-      await AuthService.updateProfile({
-        'grad_year': widget.gradYear,
-        'major': widget.major,
-        'dorm': widget.dorm,
-        'home_country': selectedCountryCode,
-        'home_currency': selectedCurrency,
-      });
-
-      if (context.mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save profile. Please try again.')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => isSaving = false);
-    }
-  }
-*/
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -202,7 +151,7 @@ Future<void> _saveProfile() async {
                           const SizedBox(height: 35),
                           isSaving
                             ? const CircularProgressIndicator()
-                            : PrimaryButton(label: 'Finish', onPressed: _saveProfile),
+                            : PrimaryButton(label: 'Next', onPressed: _goNext),
                         ],
                       ),
                     ),

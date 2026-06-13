@@ -1,51 +1,116 @@
 import pool from '../config/db';
 
-export async function getOrders(status?: string) {
+// ─── State machine ───────────────────────────────────────────────────────────
+
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  open:      ['confirmed'],
+  confirmed: ['shipped'],
+  shipped:   ['arrived'],
+  arrived:   [],
+};
+
+export function isValidTransition(from: string, to: string): boolean {
+  return VALID_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+// ─── Currency conversion helper ──────────────────────────────────────────────
+
+async function getExchangeRate(currency: string): Promise<number> {
+  try {
+    const res = await fetch(`https://open.er-api.com/v6/latest/SGD`);
+    const data = await res.json() as { rates: Record<string, number> };
+    return data.rates[currency.toUpperCase()] ?? 1;
+  } catch {
+    return 1;
+  }
+}
+
+// ─── GET orders ──────────────────────────────────────────────────────────────
+
+export async function getOrders(userId: string, status?: string) {
+  const values: unknown[] = [userId];
+  let statusClause = '';
+
+  if (status && status !== 'all') {
+    statusClause = 'AND o.status = $2';
+    values.push(status);
+  }
+
   const result = await pool.query(
-    `SELECT o.*, u.name as host_name, u.avatar_url as host_avatar,
-     COUNT(op.user_id) as participant_count
+    `SELECT
+       o.*,
+       u.name        AS host_name,
+       u.avatar_url  AS host_avatar,
+       COUNT(DISTINCT op.user_id)::int AS participant_count,
+       CASE WHEN om.user_id IS NOT NULL THEN true ELSE false END AS is_joined,
+       om.item_cost_sgd   AS my_item_cost_sgd,
+       om.split_shipping_sgd AS my_split_shipping_sgd
      FROM group_orders o
      JOIN users u ON u.id = o.organiser_id
      LEFT JOIN order_participants op ON op.order_id = o.id
-     ${status && status !== 'all' ? 'WHERE o.status = $1' : ''}
-     GROUP BY o.id, u.name, u.avatar_url
+     LEFT JOIN order_participants om ON om.order_id = o.id AND om.user_id = $1
+     ${statusClause}
+     GROUP BY o.id, u.name, u.avatar_url, om.user_id, om.item_cost_sgd, om.split_shipping_sgd
      ORDER BY o.created_at DESC`,
-    status && status !== 'all' ? [status] : []
+    values,
   );
+
   return result.rows;
 }
 
+// ─── Create order ─────────────────────────────────────────────────────────────
+
 export async function createOrder(organiserId: string, data: {
-  store: string; country: string; category: string;
-  order_name: string; min_participants: number;
-  deadline: string; pickup_spot: string; shipping_cost_sgd: number;
+  store: string;
+  country: string;
+  category: string;
+  order_name: string;
+  min_participants: number;
+  deadline: string;
+  pickup_spot: string;
+  shipping_cost_sgd: number;
 }) {
   const result = await pool.query(
     `INSERT INTO group_orders
-     (organiser_id, store, country, category, order_name, min_participants, deadline, pickup_spot, shipping_cost_sgd)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-    [organiserId, data.store, data.country, data.category,
-     data.order_name, data.min_participants, data.deadline,
-     data.pickup_spot, data.shipping_cost_sgd]
+       (organiser_id, store, country, category, order_name,
+        min_participants, deadline, pickup_spot, shipping_cost_sgd)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+     RETURNING *`,
+    [
+      organiserId, data.store, data.country, data.category,
+      data.order_name, data.min_participants, data.deadline,
+      data.pickup_spot, data.shipping_cost_sgd,
+    ],
   );
   return result.rows[0];
 }
 
-export async function joinOrder(orderId: string, userId: string, items: any[]) {
+// ─── Join order ───────────────────────────────────────────────────────────────
+
+export async function joinOrder(orderId: string, userId: string, items: Array<{ name: string; price_sgd: number; qty: number }>) {
+  // Check order is still open
+  const orderResult = await pool.query(
+    'SELECT status, min_participants FROM group_orders WHERE id = $1',
+    [orderId],
+  );
+  if (orderResult.rows.length === 0) throw new Error('Order not found.');
+  if (orderResult.rows[0].status !== 'open') throw new Error('This order is no longer open.');
+
+  const itemTotal = items.reduce((sum, i) => sum + i.price_sgd * i.qty, 0);
+
   await pool.query(
-    `INSERT INTO order_participants (order_id, user_id, items)
-     VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-    [orderId, userId, JSON.stringify(items)]
+    `INSERT INTO order_participants (order_id, user_id, items, item_cost_sgd)
+     VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
+    [orderId, userId, JSON.stringify(items), itemTotal],
   );
 
-  // Check if min participants reached → auto confirm
+  // Recalculate split shipping for all participants
+  await recalculateSplitShipping(orderId);
+
+  // Auto-confirm if min participants reached
   const countResult = await pool.query(
     'SELECT COUNT(*) FROM order_participants WHERE order_id = $1',
-    [orderId]
-  );
-  const orderResult = await pool.query(
-    'SELECT min_participants FROM group_orders WHERE id = $1',
-    [orderId]
+    [orderId],
   );
   const count = parseInt(countResult.rows[0].count);
   const min = orderResult.rows[0].min_participants;
@@ -53,62 +118,134 @@ export async function joinOrder(orderId: string, userId: string, items: any[]) {
   if (count >= min) {
     await pool.query(
       "UPDATE group_orders SET status = 'confirmed' WHERE id = $1 AND status = 'open'",
-      [orderId]
+      [orderId],
     );
   }
 
   return { joined: true, order_id: orderId };
 }
 
+// ─── Leave order ──────────────────────────────────────────────────────────────
+
 export async function leaveOrder(orderId: string, userId: string) {
+  const orderResult = await pool.query(
+    'SELECT status FROM group_orders WHERE id = $1',
+    [orderId],
+  );
+  if (orderResult.rows[0]?.status !== 'open') {
+    throw new Error('Cannot leave an order that is already confirmed or shipped.');
+  }
+
   await pool.query(
     'DELETE FROM order_participants WHERE order_id = $1 AND user_id = $2',
-    [orderId, userId]
+    [orderId, userId],
   );
+
+  await recalculateSplitShipping(orderId);
   return { left: true, order_id: orderId };
 }
 
-export async function updateStatus(orderId: string, status: string, tracking_number?: string) {
-  const result = await pool.query(
-    `UPDATE group_orders SET status = $1, tracking_number = $2
-     WHERE id = $3 RETURNING *`,
-    [status, tracking_number || null, orderId]
+// ─── Update status ────────────────────────────────────────────────────────────
+
+export async function updateStatus(orderId: string, newStatus: string, trackingNumber?: string) {
+  const current = await pool.query(
+    'SELECT status FROM group_orders WHERE id = $1',
+    [orderId],
   );
+
+  if (current.rows.length === 0) throw new Error('Order not found.');
+
+  const currentStatus = current.rows[0].status;
+
+  if (!isValidTransition(currentStatus, newStatus)) {
+    throw new Error(
+      `Invalid status transition: ${currentStatus} → ${newStatus}. ` +
+      `Allowed: ${VALID_TRANSITIONS[currentStatus]?.join(', ') || 'none'}.`
+    );
+  }
+
+  const result = await pool.query(
+    `UPDATE group_orders
+     SET status = $1, tracking_number = $2
+     WHERE id = $3
+     RETURNING *`,
+    [newStatus, trackingNumber ?? null, orderId],
+  );
+
   return result.rows[0];
 }
 
-export async function getCostSplit(orderId: string) {
+// ─── Get cost split (with currency conversion) ────────────────────────────────
+
+export async function getCostSplit(orderId: string, userCurrency?: string) {
   const participants = await pool.query(
-    `SELECT op.user_id, u.name, op.items,
-     o.shipping_cost_sgd
+    `SELECT
+       op.user_id, u.name, u.home_currency,
+       op.items, op.item_cost_sgd, op.split_shipping_sgd,
+       o.shipping_cost_sgd
      FROM order_participants op
      JOIN users u ON u.id = op.user_id
      JOIN group_orders o ON o.id = op.order_id
      WHERE op.order_id = $1`,
-    [orderId]
+    [orderId],
   );
 
   const rows = participants.rows;
-  const shippingTotal = rows[0]?.shipping_cost_sgd || 0;
+  if (rows.length === 0) return [];
 
-  const withTotals = rows.map(p => {
-    const items = p.items || [];
-    const itemTotal = items.reduce((sum: number, i: any) =>
-      sum + (i.price_sgd * i.qty), 0);
-    return { user_id: p.user_id, name: p.name, itemTotal };
+  // Get exchange rates for all unique currencies in this order
+  const currencies = [...new Set(rows.map((r) => r.home_currency).filter(Boolean))];
+  if (userCurrency) currencies.push(userCurrency);
+
+  const rates: Record<string, number> = {};
+  for (const currency of currencies) {
+    if (currency) rates[currency] = await getExchangeRate(currency);
+  }
+
+  return rows.map((p) => {
+    const totalSgd = (p.item_cost_sgd || 0) + (p.split_shipping_sgd || 0);
+    const currency = userCurrency || p.home_currency || 'SGD';
+    const rate = rates[currency] ?? 1;
+
+    return {
+      user_id:           p.user_id,
+      name:              p.name,
+      items_sgd:         parseFloat(p.item_cost_sgd) || 0,
+      shipping_share_sgd: parseFloat(p.split_shipping_sgd) || 0,
+      total_sgd:         totalSgd,
+      currency,
+      total_local:       Math.round(totalSgd * rate),
+      exchange_rate:     rate,
+    };
   });
+}
 
-  const grandTotal = withTotals.reduce((s, p) => s + p.itemTotal, 0);
+// ─── Recalculate split shipping ───────────────────────────────────────────────
+// Proportional to each participant's item cost. Equal split if all items are 0.
 
-  return withTotals.map(p => ({
-    user_id: p.user_id,
-    name: p.name,
-    items_sgd: p.itemTotal,
-    shipping_share_sgd: grandTotal > 0
-      ? (p.itemTotal / grandTotal) * shippingTotal
-      : shippingTotal / rows.length,
-    total_sgd: p.itemTotal + (grandTotal > 0
-      ? (p.itemTotal / grandTotal) * shippingTotal
-      : shippingTotal / rows.length)
-  }));
+async function recalculateSplitShipping(orderId: string): Promise<void> {
+  const result = await pool.query(
+    `SELECT op.user_id, op.item_cost_sgd, o.shipping_cost_sgd
+     FROM order_participants op
+     JOIN group_orders o ON o.id = op.order_id
+     WHERE op.order_id = $1`,
+    [orderId],
+  );
+
+  const rows = result.rows;
+  if (rows.length === 0) return;
+
+  const shippingTotal = parseFloat(rows[0].shipping_cost_sgd) || 0;
+  const grandTotal = rows.reduce((s, r) => s + (parseFloat(r.item_cost_sgd) || 0), 0);
+
+  for (const row of rows) {
+    const share = grandTotal > 0
+      ? ((parseFloat(row.item_cost_sgd) || 0) / grandTotal) * shippingTotal
+      : shippingTotal / rows.length;
+
+    await pool.query(
+      'UPDATE order_participants SET split_shipping_sgd = $1 WHERE order_id = $2 AND user_id = $3',
+      [Math.round(share * 100) / 100, orderId, row.user_id],
+    );
+  }
 }

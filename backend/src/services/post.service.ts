@@ -1,5 +1,6 @@
 import pool from '../config/db';
-import { compatibilityScore } from './matching.service';
+import { calculateMatchScore } from './matching.service';
+
 
 export async function getPosts(category?: string) {
   const result = await pool.query(
@@ -58,7 +59,10 @@ const recommendations = othersResult.rows.map((other: {
 }) => ({
   post_id: other.post_id,
   user: { id: other.id, name: other.name },
-  match_score: compatibilityScore(userLifestyle, other.lifestyle || {}),
+  match_score: calculateMatchScore(
+  { lifestyle: userLifestyle },
+  { lifestyle: other.lifestyle || {} }
+),
 })).sort((a: { match_score: number }, b: { match_score: number }) => b.match_score - a.match_score);
 
   return { post_id: postId, interested: true, recommendations };

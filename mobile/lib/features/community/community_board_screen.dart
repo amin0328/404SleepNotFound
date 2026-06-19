@@ -1,5 +1,3 @@
-// mobile/lib/features/community/community_board_screen.dart
-
 import 'package:flutter/material.dart';
 import 'models/buddy_post.dart';
 import 'models/group_order.dart';
@@ -7,6 +5,8 @@ import 'widgets/buddy_card.dart';
 import 'widgets/category_filter_bar.dart';
 import 'widgets/order_card.dart';
 import 'widgets/create_group_order_sheet.dart';
+import 'services/community_service.dart';
+import 'services/order_service.dart';
 
 enum CommunityTab { buddyMatch, groupOrders }
 
@@ -21,17 +21,67 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
   CommunityTab _activeTab = CommunityTab.buddyMatch;
   PostCategory? _selectedCategory;
   OrderStatus? _selectedStatus;
-  late List<GroupOrder> _orders;
+
+  List<BuddyPost> _posts = [];
+  bool _isLoadingPosts = true;
+  String? _postsError;
+
+  List<GroupOrder> _orders = [];
+  bool _isLoadingOrders = true;
+  String? _ordersError;
 
   @override
   void initState() {
     super.initState();
-    _orders = List.from(sampleGroupOrders);
+    _loadPosts();
+    _loadOrders();
+  }
+
+  Future<void> _loadPosts() async {
+    setState(() {
+      _isLoadingPosts = true;
+      _postsError = null;
+    });
+    try {
+      final data = await CommunityService.getPosts(
+        category: _selectedCategory?.apiValue,
+      );
+      setState(() {
+        _posts = data.map((j) => BuddyPost.fromJson(j)).toList();
+        _isLoadingPosts = false;
+      });
+    } catch (e) {
+      setState(() {
+        _postsError = e.toString().replaceAll('Exception: ', '');
+        _isLoadingPosts = false;
+      });
+    }
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() {
+      _isLoadingOrders = true;
+      _ordersError = null;
+    });
+    try {
+      final data = await OrderService.getOrders(
+        status: _selectedStatus?.apiValue,
+      );
+      setState(() {
+        _orders = data.map((j) => GroupOrder.fromJson(j)).toList();
+        _isLoadingOrders = false;
+      });
+    } catch (e) {
+      setState(() {
+        _ordersError = e.toString().replaceAll('Exception: ', '');
+        _isLoadingOrders = false;
+      });
+    }
   }
 
   List<BuddyPost> get _filteredPosts {
-    if (_selectedCategory == null) return sampleBuddyPosts;
-    return sampleBuddyPosts.where((p) => p.category == _selectedCategory).toList();
+    if (_selectedCategory == null) return _posts;
+    return _posts.where((p) => p.category == _selectedCategory).toList();
   }
 
   List<GroupOrder> get _filteredOrders {
@@ -42,7 +92,7 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
   int get _joinedCount => _orders.where((o) => o.isJoined).length;
 
   String get _headerSubtitle => _activeTab == CommunityTab.buddyMatch
-      ? '0 liked · ${sampleBuddyPosts.length} posts'
+      ? '${_posts.length} posts'
       : '$_joinedCount joined · ${_orders.length} orders';
 
   @override
@@ -70,19 +120,44 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
           ),
           child: CategoryFilterBar(
             selected: _selectedCategory,
-            onChanged: (cat) => setState(() => _selectedCategory = cat),
+            onChanged: (cat) {
+              setState(() => _selectedCategory = cat);
+              _loadPosts();
+            },
           ),
         ),
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-            itemCount: _filteredPosts.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => BuddyCard(
-              post: _filteredPosts[i],
-              onMessage: () => _handleSendMessage(_filteredPosts[i]),
-            ),
-          ),
+          child: _isLoadingPosts
+              ? const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
+                )
+              : _postsError != null
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _postsError!,
+                            style: const TextStyle(color: Color(0xFF94A3B8)),
+                          ),
+                          const SizedBox(height: 12),
+                          TextButton(onPressed: _loadPosts, child: const Text('Retry')),
+                        ],
+                      ),
+                    )
+                  : _filteredPosts.isEmpty
+                      ? const Center(
+                          child: Text('No posts yet.', style: TextStyle(color: Color(0xFF94A3B8))),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                          itemCount: _filteredPosts.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (_, i) => BuddyCard(
+                            post: _filteredPosts[i],
+                            onMessage: () => _handleSendMessage(_filteredPosts[i]),
+                          ),
+                        ),
         ),
       ],
     );
@@ -107,7 +182,7 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
                     const Icon(Icons.info_outline, size: 12, color: Color(0xFF94A3B8)),
                     const SizedBox(width: 6),
                     const Text(
-                      'Prices shown in SGD · ₩ KRW (your home currency)',
+                      'Prices shown in SGD',
                       style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                     ),
                   ],
@@ -115,32 +190,53 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
               ),
               _OrderStatusFilterBar(
                 selected: _selectedStatus,
-                onChanged: (s) => setState(() => _selectedStatus = s),
+                onChanged: (s) {
+                  setState(() => _selectedStatus = s);
+                  _loadOrders();
+                },
               ),
             ],
           ),
         ),
         Expanded(
-          child: _filteredOrders.isEmpty
+          child: _isLoadingOrders
               ? const Center(
-                  child: Text(
-                    'No orders in this status.',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                  itemCount: _filteredOrders.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) {
-                    final order = _filteredOrders[i];
-                    return OrderCard(
-                      order: order,
-                      onJoin: () => _handleJoin(order),
-                      onLeave: () => _handleLeave(order),
-                    );
-                  },
-                ),
+              : _ordersError != null
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _ordersError!,
+                            style: const TextStyle(color: Color(0xFF94A3B8)),
+                          ),
+                          const SizedBox(height: 12),
+                          TextButton(onPressed: _loadOrders, child: const Text('Retry')),
+                        ],
+                      ),
+                    )
+                  : _filteredOrders.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No orders in this status.',
+                            style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                          itemCount: _filteredOrders.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (_, i) {
+                            final order = _filteredOrders[i];
+                            return OrderCard(
+                              order: order,
+                              onJoin: () => _handleJoin(order),
+                              onLeave: () => _handleLeave(order),
+                            );
+                          },
+                        ),
         ),
       ],
     );
@@ -260,7 +356,9 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (_) => const CreateGroupOrderSheet(),
+        builder: (_) => CreateGroupOrderSheet(
+          onCreated: _loadOrders, // 생성 성공하면 목록 새로고침
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -269,27 +367,58 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
     }
   }
 
-  void _handleSendMessage(BuddyPost post) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Opening chat with ${post.name}…')),
-    );
+  void _handleSendMessage(BuddyPost post) async {
+    try {
+      await CommunityService.expressInterest(post.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Interest sent to ${post.name}!')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
   }
 
-  void _handleJoin(GroupOrder order) {
-    setState(() {
-      final idx = _orders.indexWhere((o) => o.id == order.id);
-      if (idx != -1) _orders[idx] = _orders[idx].copyWith(isJoined: true);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Joined "${order.title}"!')),
-    );
+  void _handleJoin(GroupOrder order) async {
+    try {
+      await OrderService.joinOrder(order.id, []); // 아이템 추가는 추후 확장 가능
+      setState(() {
+        final idx = _orders.indexWhere((o) => o.id == order.id);
+        if (idx != -1) _orders[idx] = _orders[idx].copyWith(isJoined: true);
+      });
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Joined "${order.title}"!')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
   }
 
-  void _handleLeave(GroupOrder order) {
-    setState(() {
-      final idx = _orders.indexWhere((o) => o.id == order.id);
-      if (idx != -1) _orders[idx] = _orders[idx].copyWith(isJoined: false);
-    });
+  void _handleLeave(GroupOrder order) async {
+    try {
+      await OrderService.leaveOrder(order.id);
+      setState(() {
+        final idx = _orders.indexWhere((o) => o.id == order.id);
+        if (idx != -1) _orders[idx] = _orders[idx].copyWith(isJoined: false);
+      });
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
   }
 }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile/core/auth/auth_service.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
 import 'package:mobile/shared/widgets/app_background.dart';
-import 'package:mobile/core/api/api_client.dart';
 
 class ProfileSetup6Screen extends StatefulWidget {
   final int gradYear;
@@ -32,7 +31,6 @@ class _ProfileSetup6ScreenState extends State<ProfileSetup6Screen> {
   Future<void> _saveProfile() async {
     setState(() => isSaving = true);
     try {
-      print('TOKEN before save: ${ApiClient.token}');
       await AuthService.updateProfile({
         'grad_year': widget.gradYear,
         'major': widget.major,

@@ -1,30 +1,41 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
   static const String baseUrl = 'https://nusphere-backend.onrender.com/v1';
-  static String? _token;
-  static String? get token => _token;
-
+  static const _storage = FlutterSecureStorage();
   static final Dio _dio = Dio(BaseOptions(baseUrl: baseUrl));
 
-  static void init() {
+  static Future<void> init() async {
     _dio.interceptors.clear();
     _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        if (_token != null) {
-          options.headers['Authorization'] = 'Bearer $_token';
+      onRequest: (options, handler) async {
+        final token = await _storage.read(key: 'jwt_token');
+        if (token != null) {
+          options.headers['Authorization'] = 'Bearer $token';
         }
         handler.next(options);
+      },
+      onError: (error, handler) async {
+        if (error.response?.statusCode == 401) {
+          await _storage.delete(key: 'jwt_token');
+        }
+        handler.next(error);
       },
     ));
   }
 
-  static void setToken(String token) {
-    _token = token;
+  static Future<void> setToken(String token) async {
+    await _storage.write(key: 'jwt_token', value: token);
   }
 
-  static void clearToken() {
-    _token = null;
+  static Future<void> clearToken() async {
+    await _storage.delete(key: 'jwt_token');
+  }
+
+  static Future<bool> hasToken() async {
+    final token = await _storage.read(key: 'jwt_token');
+    return token != null;
   }
 
   static Dio get dio => _dio;

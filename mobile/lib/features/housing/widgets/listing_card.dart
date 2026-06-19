@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import '../models/listing_model.dart';
+import 'package:mobile/core/services/currency_service.dart';
 
 class ListingCard extends StatefulWidget {
   final ListingModel listing;
   final VoidCallback? onView;
+  final ValueChanged<bool>? onSaveToggle;
+  final String? homeCurrency;
 
-  const ListingCard({super.key, required this.listing, this.onView});
+  const ListingCard({
+    super.key,
+    required this.listing,
+    this.onView,
+    this.onSaveToggle,
+    this.homeCurrency,
+  });
 
   @override
   State<ListingCard> createState() => _ListingCardState();
@@ -13,11 +22,40 @@ class ListingCard extends StatefulWidget {
 
 class _ListingCardState extends State<ListingCard> {
   late bool _saved;
+  bool _isSaving = false;
+  double? _convertedPrice;
 
   @override
   void initState() {
     super.initState();
     _saved = widget.listing.isSaved;
+    _loadConvertedPrice();
+  }
+
+  Future<void> _loadConvertedPrice() async {
+    if (widget.homeCurrency == null || widget.homeCurrency == 'SGD') return;
+    final converted = await CurrencyService.convertFromSgd(
+      widget.listing.pricePerMonth.toDouble(),
+      widget.homeCurrency!,
+    );
+    if (mounted && converted != null) {
+      setState(() => _convertedPrice = converted);
+    }
+  }
+
+  Future<void> _handleSaveTap() async {
+    if (_isSaving) return;
+    final newValue = !_saved;
+    setState(() {
+      _saved = newValue;
+      _isSaving = true;
+    });
+
+    try {
+      widget.onSaveToggle?.call(newValue);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Color _sourceColor(String source) {
@@ -49,7 +87,7 @@ class _ListingCardState extends State<ListingCard> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
@@ -101,7 +139,7 @@ class _ListingCardState extends State<ListingCard> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => setState(() => _saved = !_saved),
+                  onTap: _handleSaveTap,
                   child: Icon(
                     _saved ? Icons.favorite : Icons.favorite_border,
                     size: 18,
@@ -143,6 +181,38 @@ class _ListingCardState extends State<ListingCard> {
                         ],
                       ),
                     ),
+                    if (_convertedPrice != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            Text(
+                              '≈ ${widget.homeCurrency} ${_convertedPrice!.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontSize: 11,
+                                fontFamily: 'Jost',
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F0FF),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'Live rate',
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF818CF8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -181,7 +251,7 @@ class _ListingCardState extends State<ListingCard> {
                           ),
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
-                            BoxShadow(color: const Color(0xFF818CF8).withOpacity(0.35), blurRadius: 5, offset: const Offset(0, 4)),
+                            BoxShadow(color: const Color(0xFF818CF8).withValues(alpha: 0.35), blurRadius: 5, offset: const Offset(0, 4)),
                           ],
                         ),
                         child: Row(

@@ -5,6 +5,14 @@ import 'package:flutter/material.dart';
 enum PostCategory { roommate, hobbyMate, studyMate }
 
 extension PostCategoryExtension on PostCategory {
+  String get apiValue {
+    switch (this) {
+      case PostCategory.roommate:   return 'roommate';
+      case PostCategory.hobbyMate:  return 'hobby_mate';
+      case PostCategory.studyMate:  return 'study_mate';
+    }
+  }
+
   String get label {
     switch (this) {
       case PostCategory.roommate:
@@ -102,6 +110,31 @@ class BuddyPost {
     required this.tags,
     this.lifestyleDetails = const [],
   });
+  factory BuddyPost.fromJson(Map<String, dynamic> json) {
+  return BuddyPost(
+    id: json['id'] ?? '',
+    emoji: '🧑‍💻',
+    name: json['author_name'] ?? '',
+    matchPercent: json['match_percentage'] as int?,
+    subInfo: [
+      if (json['major'] != null) json['major'],
+      if (json['home_country'] != null) json['home_country'],
+      if (json['academic_year'] != null) json['academic_year'],
+    ].join(' · '),
+    bio: json['body'] ?? '',
+    category: _parseCategory(json['category']),
+    tags: List<String>.from(json['tags'] ?? []),
+  );
+}
+
+static PostCategory _parseCategory(String? cat) {
+    switch (cat) {
+      case 'roommate':   return PostCategory.roommate;
+      case 'hobby_mate': return PostCategory.hobbyMate;
+      case 'study_mate': return PostCategory.studyMate;
+      default:           return PostCategory.roommate;
+    }
+  }
 }
 
 // mock data

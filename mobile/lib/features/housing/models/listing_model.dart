@@ -13,6 +13,8 @@ class ListingModel {
   final List<String> tags;
   final bool isSaved;
   final String? url;
+  final String? postedBy;
+  final String? notes;
 
   ListingModel({
     required this.id,
@@ -29,6 +31,8 @@ class ListingModel {
     required this.tags,
     this.isSaved = false,
     this.url,
+    this.postedBy,
+    this.notes,
   });
 
   factory ListingModel.fromJson(Map<String, dynamic> json) => ListingModel(
@@ -48,5 +52,26 @@ class ListingModel {
     tags: List<String>.from(json['tags'] ?? []),
     isSaved: json['is_saved'] ?? false,
     url: json['url'],
+    postedBy: json['posted_by']?.toString(),
+    notes: json['notes'],
+  );
+
+  ListingModel copyWith({bool? isSaved}) => ListingModel(
+    id: id,
+    title: title,
+    source: source,
+    propertyType: propertyType,
+    address: address,
+    mrtInfo: mrtInfo,
+    pricePerMonth: pricePerMonth,
+    roomType: roomType,
+    leaseDuration: leaseDuration,
+    rating: rating,
+    reviewCount: reviewCount,
+    tags: tags,
+    isSaved: isSaved ?? this.isSaved,
+    url: url,
+    postedBy: postedBy,
+    notes: notes,
   );
 }

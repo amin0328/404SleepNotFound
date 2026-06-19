@@ -11,8 +11,7 @@ class AuthService {
         'email': email,
         'password': password,
       });
-      print('Login response: ${res.data}');
-      ApiClient.setToken(res.data['token']);
+      await ApiClient.setToken(res.data['token']);
       return res.data;
     } on DioException catch (e) {
       final message = e.response?.data['error'] ?? 'Login failed. Please try again.';
@@ -33,7 +32,7 @@ class AuthService {
         'email': email,
         'password': password,
       });
-      ApiClient.setToken(res.data['token']);
+      await ApiClient.setToken(res.data['token']); // await 추가
       return res.data;
     } on DioException catch (e) {
       final message = e.response?.data['error'] ?? 'Registration failed. Please try again.';
@@ -41,9 +40,8 @@ class AuthService {
     }
   }
 
-  static Future<void> logout() {
-    ApiClient.clearToken();
-    return Future.value();
+  static Future<void> logout() async {
+    await ApiClient.clearToken(); // await 추가
   }
 
   static Future<void> updateProfile(Map<String, dynamic> data) async {
@@ -51,6 +49,16 @@ class AuthService {
       await ApiClient.dio.put('/users/me', data: data);
     } on DioException catch (e) {
       final message = e.response?.data['error'] ?? 'Failed to update profile.';
+      throw Exception(message);
+    }
+  }
+
+  static Future<Map<String, dynamic>> getMe() async {
+    try {
+      final res = await ApiClient.dio.get('/users/me');
+      return res.data['user'];
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Failed to load profile.';
       throw Exception(message);
     }
   }

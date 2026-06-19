@@ -5,8 +5,14 @@ import '../models/deadline_model.dart';
 class DeadlineModal extends StatefulWidget {
   final DeadlineModel? existing;
   final Function(DeadlineModel) onSave;
+  final VoidCallback? onDelete; // 추가
 
-  const DeadlineModal({super.key, this.existing, required this.onSave});
+  const DeadlineModal({
+    super.key,
+    this.existing,
+    required this.onSave,
+    this.onDelete, // 추가
+  });
 
   @override
   State<DeadlineModal> createState() => _DeadlineModalState();
@@ -56,6 +62,31 @@ class _DeadlineModalState extends State<DeadlineModal> {
     Navigator.pop(context);
   }
 
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Deadline'),
+        content: Text('Delete "${widget.existing!.title}"? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      widget.onDelete?.call();
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
   InputDecoration _inputDecoration(String hint) => InputDecoration(
     hintText: hint,
     filled: true,
@@ -77,9 +108,20 @@ class _DeadlineModalState extends State<DeadlineModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.existing == null ? 'Add Deadline' : 'Edit Deadline',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.existing == null ? 'Add Deadline' : 'Edit Deadline',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              if (widget.existing != null)
+                IconButton(
+                  onPressed: _confirmDelete,
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  tooltip: 'Delete',
+                ),
+            ],
           ),
           const SizedBox(height: 20),
           TextField(controller: _titleController, decoration: _inputDecoration('Title')),
@@ -103,7 +145,6 @@ class _DeadlineModalState extends State<DeadlineModal> {
             }).toList(),
           ),
           const SizedBox(height: 12),
-          // Date picker row
           GestureDetector(
             onTap: _pickDate,
             child: Container(

@@ -6,17 +6,19 @@ import 'package:mobile/features/auth/register_screen.dart';
 import 'package:mobile/features/home/home_screen.dart';
 import 'package:mobile/core/api/api_client.dart';
 
-void main() {
-  ApiClient.init();
-  runApp(
-    const ProviderScope(
-      child: NusHubApp(),
-    ),
-  );
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiClient.init();
+  final isLoggedIn = await ApiClient.hasToken();
+
+  runApp(ProviderScope(
+    child: NusHubApp(isLoggedIn: isLoggedIn),
+  ));
 }
 
 class NusHubApp extends StatelessWidget {
-  const NusHubApp({super.key});
+  final bool isLoggedIn;
+  const NusHubApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +29,7 @@ class NusHubApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF003D7C)),
         useMaterial3: true,
       ),
-      initialRoute: '/',
+      initialRoute: isLoggedIn ? '/home' : '/',
       routes: {
         '/': (context) => const LandingScreen(),
         '/login': (context) => const LoginScreen(),

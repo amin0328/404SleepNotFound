@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/listing_model.dart';
 import '../services/housing_service.dart';
 import '../widgets/listing_card.dart';
+import '../widgets/create_listing_sheet.dart';
+import 'listing_detail_screen.dart';
+import 'package:mobile/core/providers/user_provider.dart';
 
-class HousingScreen extends StatefulWidget {
+class HousingScreen extends ConsumerStatefulWidget {
   const HousingScreen({super.key});
 
   @override
-  State<HousingScreen> createState() => _HousingScreenState();
+  ConsumerState<HousingScreen> createState() => _HousingScreenState();
 }
 
-class _HousingScreenState extends State<HousingScreen> {
+class _HousingScreenState extends ConsumerState<HousingScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedRegion = 'All';
   String _searchQuery = '';
@@ -26,18 +30,66 @@ class _HousingScreenState extends State<HousingScreen> {
   }
 
   Future<void> _loadListings() async {
+    setState(() => _isLoading = true);
     try {
-      print('Loading listings...');
-      final listings = await HousingService.getListings();
-      print('Listings count: ${listings.length}');
+      final listings = await HousingService.getListings(
+        location: _selectedRegion == 'All' ? null : _selectedRegion.toLowerCase(),
+      );
       setState(() {
         _listings = listings;
         _isLoading = false;
       });
     } catch (e) {
-      print('Housing error: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  void _onRegionChanged(String region) {
+    setState(() => _selectedRegion = region);
+    _loadListings();
+  }
+
+  Future<void> _handleSaveToggle(ListingModel listing, bool save) async {
+    try {
+      if (save) {
+        await HousingService.saveListing(listing.id);
+      } else {
+        await HousingService.unsaveListing(listing.id);
+      }
+      final idx = _listings.indexWhere((l) => l.id == listing.id);
+      if (idx != -1) {
+        setState(() {
+          _listings[idx] = _listings[idx].copyWith(isSaved: save);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to ${save ? 'save' : 'unsave'} listing.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleViewListing(ListingModel listing) async {
+    final deleted = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ListingDetailScreen(listingId: listing.id),
+      ),
+    );
+    if (deleted == true) {
+      _loadListings();
+    }
+  }
+
+  void _handleCreateListing() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CreateListingSheet(onCreated: _loadListings),
+    );
   }
 
   List<ListingModel> get _filteredListings {
@@ -53,7 +105,18 @@ class _HousingScreenState extends State<HousingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userAsync = ref.watch(userProvider);
+    final homeCurrency = userAsync.maybeWhen(
+      data: (user) => user['home_currency'] as String?,
+      orElse: () => null,
+    );
+
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _handleCreateListing,
+        backgroundColor: const Color(0xFF7C3AED),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
       body: Stack(
         children: [
           Container(
@@ -79,9 +142,9 @@ class _HousingScreenState extends State<HousingScreen> {
                           Container(
                             width: 36, height: 36,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.18),
+                              color: Colors.white.withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.white.withOpacity(0.3)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                             ),
                             child: const Icon(Icons.chevron_left, color: Colors.white, size: 20),
                           ),
@@ -92,7 +155,7 @@ class _HousingScreenState extends State<HousingScreen> {
                               const Text('Housing Search',
                                   style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700, fontFamily: 'Jost')),
                               Text('$_savedCount saved · ${_filteredListings.length} listings found',
-                                  style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12, fontFamily: 'Jost')),
+                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.65), fontSize: 12, fontFamily: 'Jost')),
                             ],
                           ),
                         ],
@@ -104,9 +167,9 @@ class _HousingScreenState extends State<HousingScreen> {
                             child: Container(
                               height: 44,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.18),
+                                color: Colors.white.withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                               ),
                               child: Row(
                                 children: [
@@ -120,7 +183,7 @@ class _HousingScreenState extends State<HousingScreen> {
                                       style: const TextStyle(color: Colors.white, fontSize: 14, fontFamily: 'Jost'),
                                       decoration: InputDecoration(
                                         hintText: 'Search area, title…',
-                                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14, fontFamily: 'Jost'),
+                                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14, fontFamily: 'Jost'),
                                         border: InputBorder.none,
                                         isDense: true,
                                       ),
@@ -134,9 +197,9 @@ class _HousingScreenState extends State<HousingScreen> {
                           Container(
                             width: 44, height: 44,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.18),
+                              color: Colors.white.withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.white.withOpacity(0.3)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                             ),
                             child: const Icon(Icons.tune, size: 15, color: Colors.white),
                           ),
@@ -155,18 +218,18 @@ class _HousingScreenState extends State<HousingScreen> {
                     itemBuilder: (_, i) {
                       final selected = _selectedRegion == _regions[i];
                       return GestureDetector(
-                        onTap: () => setState(() => _selectedRegion = _regions[i]),
+                        onTap: () => _onRegionChanged(_regions[i]),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
                             gradient: selected
                                 ? const LinearGradient(colors: [Color(0xFF5B2CF5), Color(0xFFC084FC)])
                                 : null,
-                            color: selected ? null : Colors.white.withOpacity(0.15),
+                            color: selected ? null : Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: selected ? Colors.transparent : Colors.white.withOpacity(0.25)),
+                            border: Border.all(color: selected ? Colors.transparent : Colors.white.withValues(alpha: 0.25)),
                             boxShadow: selected
-                                ? [BoxShadow(color: const Color(0xFF5B2CF5).withOpacity(0.4), blurRadius: 6, offset: const Offset(0, 4))]
+                                ? [BoxShadow(color: const Color(0xFF5B2CF5).withValues(alpha: 0.4), blurRadius: 6, offset: const Offset(0, 4))]
                                 : null,
                           ),
                           child: Center(
@@ -215,12 +278,17 @@ class _HousingScreenState extends State<HousingScreen> {
                                         ),
                                       )
                                     : ListView.builder(
-                                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
                                         itemCount: _filteredListings.length,
-                                        itemBuilder: (_, i) => ListingCard(
-                                          listing: _filteredListings[i],
-                                          onView: () {},
-                                        ),
+                                        itemBuilder: (_, i) {
+                                          final listing = _filteredListings[i];
+                                          return ListingCard(
+                                            listing: listing,
+                                            onView: () => _handleViewListing(listing),
+                                            onSaveToggle: (save) => _handleSaveToggle(listing, save),
+                                            homeCurrency: homeCurrency,
+                                          );
+                                        },
                                       ),
                           ),
                         ],

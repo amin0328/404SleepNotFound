@@ -43,6 +43,15 @@ extension OrderStatusExtension on OrderStatus {
   }
 
   int get stepIndex => OrderStatus.values.indexOf(this);
+
+  String get apiValue => name;
+
+  static OrderStatus fromApi(String? value) {
+    return OrderStatus.values.firstWhere(
+      (s) => s.name == value,
+      orElse: () => OrderStatus.open,
+    );
+  }
 }
 
 class GroupOrder {
@@ -78,12 +87,41 @@ class GroupOrder {
     this.isJoined = false,
   });
 
-  GroupOrder copyWith({bool? isJoined}) => GroupOrder(
+  factory GroupOrder.fromJson(Map<String, dynamic> json) {
+    final itemCost = double.tryParse((json['my_item_cost_sgd'] ?? 0).toString()) ?? 0;
+    final shippingShare = double.tryParse((json['my_split_shipping_sgd'] ?? 0).toString()) ?? 0;
+    final totalSgd = itemCost + shippingShare;
+
+    String formattedDeadline = '';
+    if (json['deadline'] != null) {
+      final raw = json['deadline'].toString();
+      formattedDeadline = raw.length >= 10 ? raw.substring(0, 10) : raw;
+    }
+
+    return GroupOrder(
+      id: json['id'].toString(),
+      flagEmoji: '🌍',
+      title: json['order_name'] ?? '',
+      storeName: json['store'] ?? '',
+      status: OrderStatusExtension.fromApi(json['status']),
+      deadline: formattedDeadline,
+      sgdCost: 'S\$${totalSgd.toStringAsFixed(2)}',
+      krwApprox: '',
+      itemsCost: 'Items: S\$${itemCost.toStringAsFixed(2)}',
+      shippingSplit: 'Ship split: S\$${shippingShare.toStringAsFixed(2)}',
+      pickup: json['pickup_spot'] ?? '',
+      hostEmoji: '👤',
+      hostName: json['host_name'] ?? '',
+      isJoined: json['is_joined'] ?? false,
+    );
+  }
+
+  GroupOrder copyWith({bool? isJoined, OrderStatus? status}) => GroupOrder(
         id: id,
         flagEmoji: flagEmoji,
         title: title,
         storeName: storeName,
-        status: status,
+        status: status ?? this.status,
         deadline: deadline,
         sgdCost: sgdCost,
         krwApprox: krwApprox,
@@ -96,7 +134,6 @@ class GroupOrder {
       );
 }
 
-// mock data
 final List<GroupOrder> sampleGroupOrders = [
   GroupOrder(
     id: '1',
@@ -113,69 +150,5 @@ final List<GroupOrder> sampleGroupOrders = [
     hostEmoji: '🧑‍💻',
     hostName: 'Min-Ji K.',
     isJoined: true,
-  ),
-  GroupOrder(
-    id: '2',
-    flagEmoji: '🇯🇵',
-    title: 'Uniqlo Japan Special Items',
-    storeName: 'Uniqlo JP · Clothing',
-    status: OrderStatus.confirmed,
-    deadline: 'Jul 10',
-    sgdCost: 'S\$1',
-    krwApprox: '≈ ₩871 KRW',
-    itemsCost: 'Items: ¥85',
-    shippingSplit: 'Ship split: ¥13',
-    pickup: 'Yusof Ishak House Lobby',
-    hostEmoji: '👩‍🎨',
-    hostName: 'Aiko M.',
-    isJoined: true,
-  ),
-  GroupOrder(
-    id: '3',
-    flagEmoji: '🇺🇸',
-    title: 'iHerb Supplements Bundle',
-    storeName: 'iHerb · Health',
-    status: OrderStatus.open,
-    deadline: 'Jul 20',
-    sgdCost: 'S\$90',
-    krwApprox: '≈ ₩88,676 KRW',
-    itemsCost: 'Items: \$60',
-    shippingSplit: 'Ship split: \$8',
-    pickup: 'Kent Ridge MRT',
-    hostEmoji: '👨‍⚕️',
-    hostName: 'Rahul P.',
-    isJoined: false,
-  ),
-  GroupOrder(
-    id: '4',
-    flagEmoji: '🇯🇵',
-    title: 'Daiso Japan Bulk Buy',
-    storeName: 'Daiso JP Online · Household',
-    status: OrderStatus.shipped,
-    deadline: 'Jun 30',
-    sgdCost: 'S\$0',
-    krwApprox: '≈ ₩354 KRW',
-    itemsCost: 'Items: ¥35',
-    shippingSplit: 'Ship split: ¥5',
-    pickup: 'CLB Atrium Level 1',
-    hostEmoji: '👩‍💻',
-    hostName: 'Sophie W.',
-    isJoined: true,
-  ),
-  GroupOrder(
-    id: '5',
-    flagEmoji: '🇭🇰',
-    title: 'Stylevana K-beauty Bundle',
-    storeName: 'Stylevana · Beauty',
-    status: OrderStatus.arrived,
-    deadline: 'Jun 25',
-    sgdCost: 'S\$17',
-    krwApprox: '≈ ₩16,750 KRW',
-    itemsCost: 'Items: HK\$95',
-    shippingSplit: 'Ship split: HK\$6',
-    pickup: 'UTown Starbucks',
-    hostEmoji: '👩‍🎓',
-    hostName: 'Priya S.',
-    isJoined: false,
   ),
 ];

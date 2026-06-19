@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-// import 'package:mobile/core/auth/auth_service.dart';
 import 'package:mobile/features/deadlines/screens/deadline_screen.dart';
 import 'package:mobile/features/housing/screens/housing_screen.dart';
 import 'package:mobile/features/community/community_board_screen.dart';
+import 'package:mobile/features/profile/screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
     DeadlineScreen(),
     HousingScreen(),
     CommunityBoardScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -46,6 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.people_outline),
             activeIcon: Icon(Icons.people),
             label: 'Community',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../services/order_service.dart';
 
 class CreateGroupOrderSheet extends StatefulWidget {
-  const CreateGroupOrderSheet({super.key});
+  final VoidCallback? onCreated;
+
+  const CreateGroupOrderSheet({super.key, this.onCreated});
 
   @override
   State<CreateGroupOrderSheet> createState() => _CreateGroupOrderSheetState();
@@ -14,6 +17,7 @@ class _CreateGroupOrderSheetState extends State<CreateGroupOrderSheet> {
   String? _selectedCategory;
   int _minParticipants = 2;
   DateTime? _deadline;
+  bool _isSubmitting = false;
 
   static const _categories = [
     'Beauty', 'Clothing', 'Health', 'Household',
@@ -191,12 +195,16 @@ class _CreateGroupOrderSheetState extends State<CreateGroupOrderSheet> {
                   ],
                 ),
                 child: TextButton.icon(
-                  onPressed: _handleSubmit,
-                  icon: const Icon(Icons.send_outlined,
-                      size: 16, color: Colors.white),
-                  label: const Text(
-                    'Post',
-                    style: TextStyle(
+                  onPressed: _isSubmitting ? null : _handleSubmit,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.send_outlined, size: 16, color: Colors.white),
+                  label: Text(
+                    _isSubmitting ? 'Posting...' : 'Post',
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -253,12 +261,48 @@ class _CreateGroupOrderSheetState extends State<CreateGroupOrderSheet> {
     if (picked != null) setState(() => _deadline = picked);
   }
 
-  void _handleSubmit() {
-    // TODO: call API
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Group order posted!')),
-    );
+  Future<void> _handleSubmit() async {
+    if (_titleController.text.trim().isEmpty ||
+        _storeController.text.trim().isEmpty ||
+        _selectedCategory == null ||
+        _deadline == null ||
+        _pickupController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await OrderService.createOrder(
+        store: _storeController.text.trim(),
+        country: 'Unknown',
+        category: _selectedCategory!,
+        orderName: _titleController.text.trim(),
+        minParticipants: _minParticipants,
+        deadline: _deadline!.toIso8601String().substring(0, 10),
+        pickupSpot: _pickupController.text.trim(),
+        shippingCostSgd: 0,
+      );
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        widget.onCreated?.call();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Group order posted!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   String _monthName(int month) {

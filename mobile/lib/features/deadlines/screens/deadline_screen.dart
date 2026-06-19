@@ -64,6 +64,22 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
             if (i != -1) setState(() => _deadlines[i] = updated);
           }
         },
+        onDelete: existing == null
+            ? null
+            : () async {
+                try {
+                  await DeadlineService.deleteDeadline(existing.id);
+                  setState(() {
+                    _deadlines.removeWhere((d) => d.id == existing.id);
+                  });
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete: $e')),
+                    );
+                  }
+                }
+              },
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/group_order.dart';
 import 'order_status_stepper.dart';
+import 'package:mobile/features/community/screens/cost_split_screen.dart';
 
 class OrderCard extends StatelessWidget {
   final GroupOrder order;
@@ -169,6 +170,43 @@ class OrderCard extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CostSplitScreen(
+                        orderId: order.id,
+                        orderTitle: order.title,
+                      ),
+                    ),
+                  );
+                },
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'View full split',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF818CF8),
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 9,
+                      color: Color(0xFF818CF8),
+                    ),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 12),

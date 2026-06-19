@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import { AuthRequest } from '../middleware/auth';
 
-//  Singapore Region Mapping
 const REGION_MAP: Record<string, string[]> = {
   central: [
     'bishan', 'bukit merah', 'bukit timah', 'downtown', 'geylang',
@@ -78,7 +77,6 @@ export async function getListings(req: Request, res: Response): Promise<void> {
     if (region && typeof region === 'string' && region !== 'all') {
       const { clause, values: regionValues } = getRegionCondition(region);
       if (clause) {
-
         let resolvedClause = clause;
         regionValues.forEach((_, i) => {
           resolvedClause = resolvedClause.replace(`$PLACEHOLDER_${i}`, `$${idx++}`);
@@ -114,7 +112,7 @@ export async function getListings(req: Request, res: Response): Promise<void> {
     const result = await pool.query(
       `SELECT l.id, l.source, l.title, l.price_sgd, l.location, l.type, l.room,
               l.lease_months, l.url, l.available_from, l.created_at,
-              l.posted_by, l.notes,
+              l.posted_by, l.notes, l.image_url,
               CASE WHEN sl.user_id IS NOT NULL THEN true ELSE false END AS is_saved
        FROM listings l
        LEFT JOIN saved_listings sl ON sl.listing_id = l.id AND sl.user_id = $${idx}
@@ -125,7 +123,7 @@ export async function getListings(req: Request, res: Response): Promise<void> {
 
     res.json({ listings: result.rows, total: result.rowCount });
   } catch (err) {
-    console.error('[getListings]', err);
+    console.error('[getListings] FULL ERROR:', err);
     res.status(500).json({ error: 'Internal server error.' });
   }
 }
@@ -133,11 +131,7 @@ export async function getListings(req: Request, res: Response): Promise<void> {
 export async function getRegions(_req: Request, res: Response): Promise<void> {
   res.json({
     regions: [
-      {
-        id: 'all',
-        label: 'All',
-        places: [],
-      },
+      { id: 'all', label: 'All', places: [] },
       {
         id: 'central',
         label: 'Central',
@@ -179,7 +173,7 @@ export async function getSavedListings(req: Request, res: Response): Promise<voi
     const result = await pool.query(
       `SELECT l.id, l.source, l.title, l.price_sgd, l.location, l.type, l.room,
               l.lease_months, l.url, l.available_from, l.created_at,
-              l.posted_by, l.notes, true AS is_saved
+              l.posted_by, l.notes, l.image_url, true AS is_saved
        FROM listings l
        INNER JOIN saved_listings sl ON sl.listing_id = l.id
        WHERE sl.user_id = $1
@@ -202,7 +196,7 @@ export async function getListingById(req: Request, res: Response): Promise<void>
     const result = await pool.query(
       `SELECT l.id, l.source, l.title, l.price_sgd, l.location, l.type, l.room,
               l.lease_months, l.url, l.available_from, l.created_at,
-              l.posted_by, l.notes,
+              l.posted_by, l.notes, l.image_url,
               CASE WHEN sl.user_id IS NOT NULL THEN true ELSE false END AS is_saved
        FROM listings l
        LEFT JOIN saved_listings sl ON sl.listing_id = l.id AND sl.user_id = $2
@@ -225,7 +219,7 @@ export async function getListingById(req: Request, res: Response): Promise<void>
 export async function createListing(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as AuthRequest).userId!;
-    const { title, price_sgd, location, type, room, lease_months, url, available_from, notes } = req.body;
+    const { title, price_sgd, location, type, room, lease_months, url, available_from, notes, image_url } = req.body;
 
     if (!title || !price_sgd || !location || !type) {
       res.status(400).json({ error: 'title, price_sgd, location, and type are required.' });
@@ -234,13 +228,13 @@ export async function createListing(req: Request, res: Response): Promise<void> 
 
     const result = await pool.query(
       `INSERT INTO listings
-         (source, title, price_sgd, location, type, room, lease_months, url, available_from, notes, posted_by)
-       VALUES ('user', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         (source, title, price_sgd, location, type, room, lease_months, url, available_from, notes, image_url, posted_by)
+       VALUES ('user', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
         title.trim(), Number(price_sgd), location.trim(), type.trim(),
         room ?? null, lease_months ?? null, url ?? null,
-        available_from ?? null, notes ?? null, userId,
+        available_from ?? null, notes ?? null, image_url ?? null, userId,
       ],
     );
 

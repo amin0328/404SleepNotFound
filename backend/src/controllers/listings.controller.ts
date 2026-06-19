@@ -121,11 +121,12 @@ export async function getListings(req: Request, res: Response): Promise<void> {
       values,
     );
 
-    res.json({ listings: result.rows, total: result.rowCount });
+    res.json({ listings: result.rows, total: result.rowCount }); 
   } catch (err) {
     console.error('[getListings] FULL ERROR:', err);
     res.status(500).json({ error: 'Internal server error.' });
   }
+
 }
 
 export async function getRegions(_req: Request, res: Response): Promise<void> {

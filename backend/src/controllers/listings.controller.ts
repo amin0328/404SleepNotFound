@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import { AuthRequest } from '../middleware/auth';
 
-//  Singapore Region Mapping
 const REGION_MAP: Record<string, string[]> = {
   central: [
     'bishan', 'bukit merah', 'bukit timah', 'downtown', 'geylang',
@@ -78,7 +77,6 @@ export async function getListings(req: Request, res: Response): Promise<void> {
     if (region && typeof region === 'string' && region !== 'all') {
       const { clause, values: regionValues } = getRegionCondition(region);
       if (clause) {
-
         let resolvedClause = clause;
         regionValues.forEach((_, i) => {
           resolvedClause = resolvedClause.replace(`$PLACEHOLDER_${i}`, `$${idx++}`);
@@ -125,7 +123,7 @@ export async function getListings(req: Request, res: Response): Promise<void> {
 
     res.json({ listings: result.rows, total: result.rowCount }); 
   } catch (err) {
-    console.error('[getListings] FULL ERROR:', err);  // change this line
+    console.error('[getListings] FULL ERROR:', err);
     res.status(500).json({ error: 'Internal server error.' });
   }
 
@@ -134,11 +132,7 @@ export async function getListings(req: Request, res: Response): Promise<void> {
 export async function getRegions(_req: Request, res: Response): Promise<void> {
   res.json({
     regions: [
-      {
-        id: 'all',
-        label: 'All',
-        places: [],
-      },
+      { id: 'all', label: 'All', places: [] },
       {
         id: 'central',
         label: 'Central',
@@ -180,7 +174,7 @@ export async function getSavedListings(req: Request, res: Response): Promise<voi
     const result = await pool.query(
       `SELECT l.id, l.source, l.title, l.price_sgd, l.location, l.type, l.room,
               l.lease_months, l.url, l.available_from, l.created_at,
-              l.posted_by, l.notes,  l.image_url, true AS is_saved,
+              l.posted_by, l.notes, l.image_url, true AS is_saved
        FROM listings l
        INNER JOIN saved_listings sl ON sl.listing_id = l.id
        WHERE sl.user_id = $1
@@ -241,7 +235,7 @@ export async function createListing(req: Request, res: Response): Promise<void> 
       [
         title.trim(), Number(price_sgd), location.trim(), type.trim(),
         room ?? null, lease_months ?? null, url ?? null,
-        available_from ?? null, notes ?? null, userId,
+        available_from ?? null, notes ?? null, image_url ?? null, userId,
       ],
     );
 

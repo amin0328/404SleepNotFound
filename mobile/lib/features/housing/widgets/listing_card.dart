@@ -25,6 +25,8 @@ class _ListingCardState extends State<ListingCard> {
   bool _isSaving = false;
   double? _convertedPrice;
 
+  static const _placeholderImage = 'https://via.placeholder.com/400x300?text=No+Image';
+
   @override
   void initState() {
     super.initState();
@@ -93,6 +95,32 @@ class _ListingCardState extends State<ListingCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Image.network(
+              widget.listing.imageUrl ?? _placeholderImage,
+              width: double.infinity,
+              height: 180,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: double.infinity,
+                height: 180,
+                color: const Color(0xFFF1F5F9),
+                child: const Icon(Icons.image_not_supported_outlined, color: Color(0xFF94A3B8), size: 32),
+              ),
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return Container(
+                  width: double.infinity,
+                  height: 180,
+                  color: const Color(0xFFF1F5F9),
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C3AED)),
+                  ),
+                );
+              },
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(

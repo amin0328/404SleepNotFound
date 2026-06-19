@@ -15,6 +15,7 @@ class ListingModel {
   final String? url;
   final String? postedBy;
   final String? notes;
+  final String? imageUrl;
 
   ListingModel({
     required this.id,
@@ -33,6 +34,7 @@ class ListingModel {
     this.url,
     this.postedBy,
     this.notes,
+    this.imageUrl,
   });
 
   factory ListingModel.fromJson(Map<String, dynamic> json) => ListingModel(
@@ -54,6 +56,7 @@ class ListingModel {
     url: json['url'],
     postedBy: json['posted_by']?.toString(),
     notes: json['notes'],
+    imageUrl: json['image_url'],
   );
 
   ListingModel copyWith({bool? isSaved}) => ListingModel(
@@ -73,5 +76,6 @@ class ListingModel {
     url: url,
     postedBy: postedBy,
     notes: notes,
+    imageUrl: imageUrl,
   );
 }

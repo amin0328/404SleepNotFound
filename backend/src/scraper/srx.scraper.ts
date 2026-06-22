@@ -35,7 +35,6 @@ export async function scrapeSRX(): Promise<void> {
     const $ = cheerio.load(html);
     const listings: ScrapedListing[] = [];
 
-    // Try multiple selectors since SRX may change their HTML
     const cardSelectors = [
       '.listing-card',
       '.property-card', 
@@ -53,7 +52,6 @@ export async function scrapeSRX(): Promise<void> {
     }
 
     if (cards.length === 0) {
-      // Log the page title to see what we got back
       const title = $('title').text();
       console.log(`[scraper] No cards found. Page title: "${title}"`);
       console.log('[scraper] SRX may be blocking requests or changed their HTML structure');

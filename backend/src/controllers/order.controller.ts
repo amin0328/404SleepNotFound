@@ -80,8 +80,6 @@ export async function updateStatus(req: Request, res: Response): Promise<void> {
 export async function getCostSplit(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as AuthRequest).userId!;
-
-    // Get requesting user's home currency for conversion
     const userResult = await (await import('../config/db')).default.query(
       'SELECT home_currency FROM users WHERE id = $1', [userId]
     );

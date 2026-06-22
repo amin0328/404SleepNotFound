@@ -13,9 +13,9 @@ import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/regions',     requireAuth, getRegions);      // must be before /:id
+router.get('/regions',     requireAuth, getRegions);     
 router.get('/',            requireAuth, getListings);
-router.get('/saved',       requireAuth, getSavedListings); // must be before /:id
+router.get('/saved',       requireAuth, getSavedListings); 
 router.get('/:id',         requireAuth, getListingById);
 router.post('/',           requireAuth, createListing);
 router.delete('/:id',      requireAuth, deleteListing);

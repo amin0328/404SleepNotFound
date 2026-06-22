@@ -28,19 +28,16 @@ export async function createPost(authorId: string, data: {
 }
 
 export async function expressInterest(postId: string, userId: string) {
-  // Record interest
   await pool.query(
     `INSERT INTO post_interests (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
     [postId, userId]
   );
 
-  // Get the interested user's lifestyle
   const userResult = await pool.query(
     'SELECT lifestyle FROM users WHERE id = $1', [userId]
   );
   const userLifestyle = userResult.rows[0]?.lifestyle || {};
 
-  // Get all other interested users and score compatibility
   const othersResult = await pool.query(
     `SELECT u.id, u.name, u.lifestyle, p.id as post_id, p.title
      FROM post_interests pi

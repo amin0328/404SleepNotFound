@@ -1,7 +1,5 @@
 import pool from '../config/db';
 
-// ─── State machine ───────────────────────────────────────────────────────────
-
 const VALID_TRANSITIONS: Record<string, string[]> = {
   open:      ['confirmed'],
   confirmed: ['shipped'],
@@ -13,8 +11,6 @@ export function isValidTransition(from: string, to: string): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-// ─── Currency conversion helper ──────────────────────────────────────────────
-
 async function getExchangeRate(currency: string): Promise<number> {
   try {
     const res = await fetch(`https://open.er-api.com/v6/latest/SGD`);
@@ -24,8 +20,6 @@ async function getExchangeRate(currency: string): Promise<number> {
     return 1;
   }
 }
-
-// ─── GET orders ──────────────────────────────────────────────────────────────
 
 export async function getOrders(userId: string, status?: string) {
   const values: unknown[] = [userId];
@@ -58,8 +52,6 @@ export async function getOrders(userId: string, status?: string) {
   return result.rows;
 }
 
-// ─── Create order ─────────────────────────────────────────────────────────────
-
 export async function createOrder(organiserId: string, data: {
   store: string;
   country: string;
@@ -85,10 +77,8 @@ export async function createOrder(organiserId: string, data: {
   return result.rows[0];
 }
 
-// ─── Join order ───────────────────────────────────────────────────────────────
 
 export async function joinOrder(orderId: string, userId: string, items: Array<{ name: string; price_sgd: number; qty: number }>) {
-  // Check order is still open
   const orderResult = await pool.query(
     'SELECT status, min_participants FROM group_orders WHERE id = $1',
     [orderId],
@@ -104,10 +94,8 @@ export async function joinOrder(orderId: string, userId: string, items: Array<{ 
     [orderId, userId, JSON.stringify(items), itemTotal],
   );
 
-  // Recalculate split shipping for all participants
   await recalculateSplitShipping(orderId);
 
-  // Auto-confirm if min participants reached
   const countResult = await pool.query(
     'SELECT COUNT(*) FROM order_participants WHERE order_id = $1',
     [orderId],
@@ -124,8 +112,6 @@ export async function joinOrder(orderId: string, userId: string, items: Array<{ 
 
   return { joined: true, order_id: orderId };
 }
-
-// ─── Leave order ──────────────────────────────────────────────────────────────
 
 export async function leaveOrder(orderId: string, userId: string) {
   const orderResult = await pool.query(
@@ -144,8 +130,6 @@ export async function leaveOrder(orderId: string, userId: string) {
   await recalculateSplitShipping(orderId);
   return { left: true, order_id: orderId };
 }
-
-// ─── Update status ────────────────────────────────────────────────────────────
 
 export async function updateStatus(orderId: string, newStatus: string, trackingNumber?: string) {
   const current = await pool.query(
@@ -175,8 +159,6 @@ export async function updateStatus(orderId: string, newStatus: string, trackingN
   return result.rows[0];
 }
 
-// ─── Get cost split (with currency conversion) ────────────────────────────────
-
 export async function getCostSplit(orderId: string, userCurrency?: string) {
   const participants = await pool.query(
     `SELECT
@@ -193,7 +175,6 @@ export async function getCostSplit(orderId: string, userCurrency?: string) {
   const rows = participants.rows;
   if (rows.length === 0) return [];
 
-  // Get exchange rates for all unique currencies in this order
   const currencies = [...new Set(rows.map((r) => r.home_currency).filter(Boolean))];
   if (userCurrency) currencies.push(userCurrency);
 
@@ -219,9 +200,6 @@ export async function getCostSplit(orderId: string, userCurrency?: string) {
     };
   });
 }
-
-// ─── Recalculate split shipping ───────────────────────────────────────────────
-// Proportional to each participant's item cost. Equal split if all items are 0.
 
 async function recalculateSplitShipping(orderId: string): Promise<void> {
   const result = await pool.query(

@@ -1,7 +1,3 @@
-// ─── Match Score Service ─────────────────────────────────────────────────────
-// Compares two users' lifestyle JSONB fields and returns a 0-100 score.
-// Each criterion is worth equal weight (1/6 of total).
-
 interface Lifestyle {
   sleep?: 'early' | 'late';
   noise?: 'quiet' | 'loud';
@@ -21,7 +17,6 @@ export function calculateMatchScore(
   let score = 0;
   let total = 0;
 
-  // ── Core lifestyle (each worth 1 point) ──────────────────────────────────
   total += 6;
   if (a.sleep    && b.sleep    && a.sleep    === b.sleep)    score += 1;
   if (a.noise    && b.noise    && a.noise    === b.noise)    score += 1;
@@ -29,19 +24,16 @@ export function calculateMatchScore(
   if (a.diet     && b.diet     && a.diet     === b.diet)     score += 1;
   if (typeof a.cooking === 'boolean' && typeof b.cooking === 'boolean' && a.cooking === b.cooking) score += 1;
 
-  // Cleanliness — within 1 level counts as compatible
   if (a.cleanliness != null && b.cleanliness != null) {
     if (Math.abs(a.cleanliness - b.cleanliness) <= 1) score += 1;
   }
 
-  // ── Bonus: same nationality (worth 0.5 extra) ────────────────────────────
   if (userA.home_country && userB.home_country &&
       userA.home_country === userB.home_country) {
     score += 0.5;
     total += 0.5;
   }
 
-  // ── Bonus: same faculty/major (worth 0.5 extra) ──────────────────────────
   if (userA.major && userB.major) {
     const facultyA = userA.major.split(' ')[0];
     const facultyB = userB.major.split(' ')[0];

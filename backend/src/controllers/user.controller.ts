@@ -2,8 +2,6 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import { AuthRequest } from '../middleware/auth';
 
-// ─── GET /v1/users/me ────────────────────────────────────────────────────────
-
 export async function getMe(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as AuthRequest).userId!;
@@ -30,10 +28,6 @@ export async function getMe(req: Request, res: Response): Promise<void> {
   }
 }
 
-// ─── PUT /v1/users/me ────────────────────────────────────────────────────────
-// Accepts any subset of profile fields — partial updates are fine.
-// Called both during onboarding (Step 2) and later profile edits.
-
 export async function updateMe(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as AuthRequest).userId!;
@@ -49,7 +43,6 @@ export async function updateMe(req: Request, res: Response): Promise<void> {
       lifestyle,
     } = req.body;
 
-    // ── Validate lifestyle block if provided ──────────────────────────────
     if (lifestyle !== undefined) {
       const err = validateLifestyle(lifestyle);
       if (err) {
@@ -58,7 +51,6 @@ export async function updateMe(req: Request, res: Response): Promise<void> {
       }
     }
 
-    // ── Validate grad_year is a reasonable number ─────────────────────────
     if (grad_year !== undefined) {
       const year = Number(grad_year);
       if (!Number.isInteger(year) || year < 2020 || year > 2040) {
@@ -67,19 +59,16 @@ export async function updateMe(req: Request, res: Response): Promise<void> {
       }
     }
 
-    // ── Validate home_country is 2-letter ISO code ────────────────────────
     if (home_country !== undefined && !/^[A-Za-z]{2}$/.test(home_country)) {
       res.status(400).json({ error: 'home_country must be a 2-letter code (e.g. "MY", "KR").' });
       return;
     }
 
-    // ── Validate home_currency is 3-letter code ───────────────────────────
     if (home_currency !== undefined && !/^[A-Za-z]{3}$/.test(home_currency)) {
       res.status(400).json({ error: 'home_currency must be a 3-letter code (e.g. "MYR", "KRW").' });
       return;
     }
 
-    // ── Build dynamic SET clause — only update provided fields ────────────
     const updates: string[] = [];
     const values: unknown[] = [];
     let idx = 1;
@@ -105,7 +94,7 @@ export async function updateMe(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    values.push(userId); // for WHERE id = $N
+    values.push(userId); 
 
     const result = await pool.query(
       `UPDATE users
@@ -124,8 +113,6 @@ export async function updateMe(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Internal server error.' });
   }
 }
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function isOnboardingComplete(user: Record<string, unknown>): boolean {
   return !!(

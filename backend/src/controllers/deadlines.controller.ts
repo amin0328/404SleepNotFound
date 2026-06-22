@@ -2,9 +2,6 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import { AuthRequest } from '../middleware/auth';
 
-// ─── Urgency scoring ─────────────────────────────────────────────────────────
-// Returns a score and label based on days until due date
-
 function getUrgency(dueDate: string): { score: number; label: string } {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -12,13 +9,12 @@ function getUrgency(dueDate: string): { score: number; label: string } {
   due.setHours(0, 0, 0, 0);
   const daysLeft = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (daysLeft < 0)   return { score: 3, label: 'urgent' };   // overdue → red
-  if (daysLeft === 0) return { score: 3, label: 'urgent' };   // due today → red
-  if (daysLeft <= 3)  return { score: 3, label: 'urgent' };   // ≤3 days → red
-  if (daysLeft <= 10) return { score: 2, label: 'soon' };     // ≤10 days → yellow
-  return { score: 1, label: 'on_track' };                     // >10 days → green
+  if (daysLeft < 0)   return { score: 3, label: 'urgent' };   
+  if (daysLeft === 0) return { score: 3, label: 'urgent' };  
+  if (daysLeft <= 3)  return { score: 3, label: 'urgent' };  
+  if (daysLeft <= 10) return { score: 2, label: 'soon' };     
+  return { score: 1, label: 'on_track' };                    
 }
-// ─── GET /v1/deadlines ───────────────────────────────────────────────────────
 
 export async function getDeadlines(req: Request, res: Response): Promise<void> {
   try {
@@ -45,7 +41,6 @@ export async function getDeadlines(req: Request, res: Response): Promise<void> {
   }
 }
 
-// ─── POST /v1/deadlines ──────────────────────────────────────────────────────
 
 export async function createDeadline(req: Request, res: Response): Promise<void> {
   try {
@@ -86,15 +81,12 @@ export async function createDeadline(req: Request, res: Response): Promise<void>
   }
 }
 
-// ─── PATCH /v1/deadlines/:id ─────────────────────────────────────────────────
-
 export async function updateDeadline(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as AuthRequest).userId!;
     const { id } = req.params;
     const { title, category, due_date, reminder_days, notifications_on, notes } = req.body;
 
-    // Check deadline exists and belongs to this user
     const existing = await pool.query(
       'SELECT id FROM deadlines WHERE id = $1 AND user_id = $2',
       [id, userId],
@@ -104,7 +96,6 @@ export async function updateDeadline(req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Build dynamic SET clause
     const updates: string[] = [];
     const values: unknown[] = [];
     let idx = 1;
@@ -150,8 +141,6 @@ export async function updateDeadline(req: Request, res: Response): Promise<void>
     res.status(500).json({ error: 'Internal server error.' });
   }
 }
-
-// ─── DELETE /v1/deadlines/:id ────────────────────────────────────────────────
 
 export async function deleteDeadline(req: Request, res: Response): Promise<void> {
   try {

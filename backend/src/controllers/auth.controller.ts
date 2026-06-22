@@ -5,27 +5,17 @@ import pool from '../config/db';
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 function generateToken(userId: string): string {
   return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '7d' });
 }
 
-// ─── POST /v1/auth/register ──────────────────────────────────────────────────
-// Step 1 — account creation (nusnet_id, name, email, password)
-// Step 2 — profile onboarding fields are OPTIONAL here; the client can also
-//           send them all in one shot or follow up with PUT /users/me.
-
 export async function register(req: Request, res: Response): Promise<void> {
   try {
     const {
-      // Step 1 — required
       nusnet_id,
       name,
       email,
       password,
-
-      // Step 2 — optional at registration time
       home_country,
       major,
       home_currency,
@@ -35,7 +25,6 @@ export async function register(req: Request, res: Response): Promise<void> {
       lifestyle,
     } = req.body;
 
-    // ── Validate required fields ──────────────────────────────────────────
     if (!nusnet_id || !name || !email || !password) {
       res.status(400).json({
         error: 'nusnet_id, name, email, and password are required.',
@@ -59,7 +48,6 @@ export async function register(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // ── Check for duplicates ──────────────────────────────────────────────
     const existing = await pool.query(
       'SELECT id FROM users WHERE email = $1 OR nusnet_id = $2',
       [email.toLowerCase(), nusnet_id.toLowerCase()],
@@ -69,7 +57,6 @@ export async function register(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // ── Validate optional lifestyle block if provided ─────────────────────
     if (lifestyle !== undefined) {
       const validationError = validateLifestyle(lifestyle);
       if (validationError) {
@@ -78,7 +65,6 @@ export async function register(req: Request, res: Response): Promise<void> {
       }
     }
 
-    // ── Hash password & insert ────────────────────────────────────────────
     const password_hash = await bcrypt.hash(password, 12);
 
     const result = await pool.query(
@@ -108,7 +94,6 @@ export async function register(req: Request, res: Response): Promise<void> {
     const user = result.rows[0];
     const token = generateToken(user.id);
 
-    // Determine if onboarding is still needed
     const onboardingComplete = !!(
       user.home_country &&
       user.major &&
@@ -129,8 +114,6 @@ export async function register(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Internal server error.' });
   }
 }
-
-// ─── POST /v1/auth/login ─────────────────────────────────────────────────────
 
 export async function login(req: Request, res: Response): Promise<void> {
   try {
@@ -165,7 +148,6 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     const token = generateToken(user.id);
 
-    // Strip the hash before sending back
     const { password_hash, ...safeUser } = user;
 
     const onboardingComplete = !!(
@@ -188,8 +170,6 @@ export async function login(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Internal server error.' });
   }
 }
-
-// ─── Lifestyle validator ─────────────────────────────────────────────────────
 
 function validateLifestyle(l: Record<string, unknown>): string | null {
   if (!['early', 'late'].includes(l.sleep as string)) {

@@ -11,6 +11,7 @@ import orderRoutes from './routes/orders.routes';
 import postRoutes from './routes/posts.routes';
 import currencyRoutes from './routes/currency.routes';
 import { scrapeSRX } from './scraper/srx.scraper';
+import notificationRoutes from './routes/notification.routes';
 
 const app = express();
 
@@ -18,18 +19,10 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// Health check
 app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 
-// Temporary scrape test route — remove after testing
-app.get('/v1/admin/scrape', async (req: Request, res: Response) => {
-  await scrapeSRX();
-  res.json({ message: 'Scrape triggered, check logs' });
-});
-
-// Routes
 app.use('/v1/auth', authRoutes);
 app.use('/v1/users', userRoutes);
 app.use('/v1/deadlines', deadlineRoutes);
@@ -37,8 +30,7 @@ app.use('/v1/listings', listingRoutes);
 app.use('/v1/posts', postRoutes);
 app.use('/v1/currency', currencyRoutes);
 app.use('/v1/orders', orderRoutes);
-
-// Error handler must be last
+app.use('/v1/users', notificationRoutes);
 app.use(errorHandler);
 
 export default app;

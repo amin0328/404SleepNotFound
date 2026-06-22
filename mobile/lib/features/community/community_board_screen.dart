@@ -20,6 +20,7 @@ class CommunityBoardScreen extends StatefulWidget {
 class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
   CommunityTab _activeTab = CommunityTab.buddyMatch;
   PostCategory? _selectedCategory;
+  bool _showSavedPostsOnly = false;
   OrderStatus? _selectedStatus;
 
   List<BuddyPost> _posts = [];
@@ -80,6 +81,9 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
   }
 
   List<BuddyPost> get _filteredPosts {
+    if (_showSavedPostsOnly) {
+      return _posts.where((p) => p.isFavorited).toList();
+    }
     if (_selectedCategory == null) return _posts;
     return _posts.where((p) => p.category == _selectedCategory).toList();
   }
@@ -120,9 +124,20 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
           ),
           child: CategoryFilterBar(
             selected: _selectedCategory,
+            savingsSelected: _showSavedPostsOnly,
             onChanged: (cat) {
-              setState(() => _selectedCategory = cat);
+              setState(() {
+                _selectedCategory = cat;
+                _showSavedPostsOnly = false;
+              });
               _loadPosts();
+            },
+            onSavingsToggle: () {
+              setState(() {
+                _showSavedPostsOnly = !_showSavedPostsOnly;
+                if (_showSavedPostsOnly) _selectedCategory = null;
+              });
+              if (_showSavedPostsOnly) _loadPosts();
             },
           ),
         ),
@@ -146,8 +161,11 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
                       ),
                     )
                   : _filteredPosts.isEmpty
-                      ? const Center(
-                          child: Text('No posts yet.', style: TextStyle(color: Color(0xFF94A3B8))),
+                      ? Center(
+                          child: Text(
+                            _showSavedPostsOnly ? 'No saved posts yet.' : 'No posts yet.',
+                            style: const TextStyle(color: Color(0xFF94A3B8)),
+                          ),
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
@@ -156,6 +174,7 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
                           itemBuilder: (_, i) => BuddyCard(
                             post: _filteredPosts[i],
                             onMessage: () => _handleSendMessage(_filteredPosts[i]),
+                            onToggleFavorite: () => _handleToggleFavorite(_filteredPosts[i]),
                           ),
                         ),
         ),
@@ -357,7 +376,7 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (_) => CreateGroupOrderSheet(
-          onCreated: _loadOrders, // 생성 성공하면 목록 새로고침
+          onCreated: _loadOrders,
         ),
       );
     } else {
@@ -384,9 +403,25 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
     }
   }
 
+  void _handleToggleFavorite(BuddyPost post) async {
+    try {
+      final favorited = await CommunityService.toggleFavorite(post.id);
+      setState(() {
+        final idx = _posts.indexWhere((p) => p.id == post.id);
+        if (idx != -1) _posts[idx] = _posts[idx].copyWith(isFavorited: favorited);
+      });
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
+  }
+
   void _handleJoin(GroupOrder order) async {
     try {
-      await OrderService.joinOrder(order.id, []); // 아이템 추가는 추후 확장 가능
+      await OrderService.joinOrder(order.id, []);
       setState(() {
         final idx = _orders.indexWhere((o) => o.id == order.id);
         if (idx != -1) _orders[idx] = _orders[idx].copyWith(isJoined: true);

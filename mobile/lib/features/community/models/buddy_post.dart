@@ -1,5 +1,3 @@
-// mobile/lib/features/community/models/buddy_post.dart
-
 import 'package:flutter/material.dart';
 
 enum PostCategory { roommate, hobbyMate, studyMate }
@@ -98,6 +96,7 @@ class BuddyPost {
   final PostCategory category;
   final List<String> tags;
   final List<LifestyleDetail> lifestyleDetails;
+  final bool isFavorited;
 
   const BuddyPost({
     required this.id,
@@ -109,25 +108,41 @@ class BuddyPost {
     required this.category,
     required this.tags,
     this.lifestyleDetails = const [],
+    this.isFavorited = false,
   });
-  factory BuddyPost.fromJson(Map<String, dynamic> json) {
-  return BuddyPost(
-    id: json['id'] ?? '',
-    emoji: '🧑‍💻',
-    name: json['author_name'] ?? '',
-    matchPercent: json['match_percentage'] as int?,
-    subInfo: [
-      if (json['major'] != null) json['major'],
-      if (json['home_country'] != null) json['home_country'],
-      if (json['academic_year'] != null) json['academic_year'],
-    ].join(' · '),
-    bio: json['body'] ?? '',
-    category: _parseCategory(json['category']),
-    tags: List<String>.from(json['tags'] ?? []),
-  );
-}
 
-static PostCategory _parseCategory(String? cat) {
+  factory BuddyPost.fromJson(Map<String, dynamic> json) {
+    return BuddyPost(
+      id: json['id'] ?? '',
+      emoji: '🧑‍💻',
+      name: json['author_name'] ?? '',
+      matchPercent: json['match_percentage'] as int?,
+      subInfo: [
+        if (json['major'] != null) json['major'],
+        if (json['home_country'] != null) json['home_country'],
+        if (json['academic_year'] != null) json['academic_year'],
+      ].join(' · '),
+      bio: json['body'] ?? '',
+      category: _parseCategory(json['category']),
+      tags: List<String>.from(json['tags'] ?? []),
+      isFavorited: json['is_favorited'] == true,
+    );
+  }
+
+  BuddyPost copyWith({bool? isFavorited}) => BuddyPost(
+        id: id,
+        emoji: emoji,
+        name: name,
+        matchPercent: matchPercent,
+        subInfo: subInfo,
+        bio: bio,
+        category: category,
+        tags: tags,
+        lifestyleDetails: lifestyleDetails,
+        isFavorited: isFavorited ?? this.isFavorited,
+      );
+
+  static PostCategory _parseCategory(String? cat) {
     switch (cat) {
       case 'roommate':   return PostCategory.roommate;
       case 'hobby_mate': return PostCategory.hobbyMate;

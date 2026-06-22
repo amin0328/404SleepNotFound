@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import '../models/buddy_post.dart';
 
-class BuddyCard extends StatefulWidget {
+class BuddyCard extends StatelessWidget {
   final BuddyPost post;
   final VoidCallback? onMessage;
+  final VoidCallback? onToggleFavorite;
 
-  const BuddyCard({super.key, required this.post, this.onMessage});
-
-  @override
-  State<BuddyCard> createState() => _BuddyCardState();
-}
-
-class _BuddyCardState extends State<BuddyCard> {
-  bool _liked = false;
+  const BuddyCard({
+    super.key,
+    required this.post,
+    this.onMessage,
+    this.onToggleFavorite,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final cat = widget.post.category;
+    final cat = post.category;
 
     return Container(
       decoration: BoxDecoration(
@@ -48,7 +47,7 @@ class _BuddyCardState extends State<BuddyCard> {
                   ),
                   child: Center(
                     child: Text(
-                      widget.post.emoji,
+                      post.emoji,
                       style: const TextStyle(fontSize: 20),
                     ),
                   ),
@@ -61,14 +60,14 @@ class _BuddyCardState extends State<BuddyCard> {
                       Row(
                         children: [
                           Text(
-                            widget.post.name,
+                            post.name,
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF1E1B4B),
                             ),
                           ),
-                          if (widget.post.matchPercent != null) ...[
+                          if (post.matchPercent != null) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -78,7 +77,7 @@ class _BuddyCardState extends State<BuddyCard> {
                                 borderRadius: BorderRadius.circular(100),
                               ),
                               child: Text(
-                                '${widget.post.matchPercent}% match',
+                                '${post.matchPercent}% match',
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
@@ -91,7 +90,7 @@ class _BuddyCardState extends State<BuddyCard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        widget.post.subInfo,
+                        post.subInfo,
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF94A3B8),
@@ -101,13 +100,13 @@ class _BuddyCardState extends State<BuddyCard> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => setState(() => _liked = !_liked),
+                  onTap: onToggleFavorite,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Icon(
-                      _liked ? Icons.favorite : Icons.favorite_border,
+                      post.isFavorited ? Icons.favorite : Icons.favorite_border,
                       size: 20,
-                      color: _liked
+                      color: post.isFavorited
                           ? const Color(0xFF818CF8)
                           : const Color(0xFFCBD5E1),
                     ),
@@ -118,7 +117,7 @@ class _BuddyCardState extends State<BuddyCard> {
 
             const SizedBox(height: 12),
             Text(
-              widget.post.bio,
+              post.bio,
               style: const TextStyle(
                 fontSize: 13,
                 height: 1.5,
@@ -147,7 +146,7 @@ class _BuddyCardState extends State<BuddyCard> {
                     ),
                   ),
                 ),
-                ...widget.post.tags.map(
+                ...post.tags.map(
                   (tag) => Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -167,7 +166,7 @@ class _BuddyCardState extends State<BuddyCard> {
               ],
             ),
 
-            if (widget.post.lifestyleDetails.isNotEmpty) ...[
+            if (post.lifestyleDetails.isNotEmpty) ...[
               const SizedBox(height: 12),
               GridView.count(
                 crossAxisCount: 2,
@@ -176,7 +175,7 @@ class _BuddyCardState extends State<BuddyCard> {
                 childAspectRatio: 4.5,
                 mainAxisSpacing: 6,
                 crossAxisSpacing: 6,
-                children: widget.post.lifestyleDetails
+                children: post.lifestyleDetails
                     .map((d) => _LifestyleChip(detail: d))
                     .toList(),
               ),
@@ -199,7 +198,7 @@ class _BuddyCardState extends State<BuddyCard> {
                   ],
                 ),
                 child: TextButton.icon(
-                  onPressed: widget.onMessage,
+                  onPressed: onMessage,
                   icon: const Icon(
                     Icons.chat_bubble_outline,
                     size: 14,

@@ -5,6 +5,7 @@ import '../services/housing_service.dart';
 import '../widgets/listing_card.dart';
 import '../widgets/create_listing_sheet.dart';
 import 'listing_detail_screen.dart';
+import 'saved_listings_screen.dart';
 import 'package:mobile/core/providers/user_provider.dart';
 
 class HousingScreen extends ConsumerStatefulWidget {
@@ -90,6 +91,15 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => CreateListingSheet(onCreated: _loadListings),
     );
+  }
+
+  Future<void> _handleOpenSavedListings() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SavedListingsScreen()),
+    );
+    // Refresh in case items were unsaved while on that screen.
+    _loadListings();
   }
 
   List<ListingModel> get _filteredListings {
@@ -202,6 +212,19 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
                               border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                             ),
                             child: const Icon(Icons.tune, size: 15, color: Colors.white),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: _handleOpenSavedListings,
+                            child: Container(
+                              width: 44, height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                              ),
+                              child: const Icon(Icons.favorite, size: 15, color: Colors.white),
+                            ),
                           ),
                         ],
                       ),

@@ -20,6 +20,18 @@ class HousingService {
         .toList();
   }
 
+  static Future<List<ListingModel>> getSavedListings() async {
+    try {
+      final res = await ApiClient.dio.get('/listings/saved');
+      return (res.data['listings'] as List)
+          .map((json) => ListingModel.fromJson(json))
+          .toList();
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Failed to load saved listings.';
+      throw Exception(message);
+    }
+  }
+
   static Future<ListingModel> getListingById(String id) async {
     try {
       final res = await ApiClient.dio.get('/listings/$id');

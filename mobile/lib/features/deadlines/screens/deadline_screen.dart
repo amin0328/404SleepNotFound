@@ -210,6 +210,11 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
                                   ),
                                 ),
                                 calendarStyle: CalendarStyle(
+                                  defaultDecoration: const BoxDecoration(shape: BoxShape.rectangle),
+                                  weekendDecoration: const BoxDecoration(shape: BoxShape.rectangle),
+                                  outsideDecoration: const BoxDecoration(shape: BoxShape.rectangle),
+                                  disabledDecoration: const BoxDecoration(shape: BoxShape.rectangle),
+                                  holidayDecoration: const BoxDecoration(shape: BoxShape.rectangle),
                                   defaultTextStyle: const TextStyle(
                                     color: Color(0xFF374151),
                                     fontSize: 13,
@@ -217,6 +222,7 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
                                   ),
                                   todayDecoration: const BoxDecoration(
                                     color: Color(0xFFF1F0FF),
+                                    shape: BoxShape.rectangle,
                                     borderRadius: BorderRadius.all(Radius.circular(14)),
                                   ),
                                   todayTextStyle: const TextStyle(
@@ -227,6 +233,7 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
                                   ),
                                   selectedDecoration: const BoxDecoration(
                                     color: Color(0xFF7C3AED),
+                                    shape: BoxShape.rectangle,
                                     borderRadius: BorderRadius.all(Radius.circular(14)),
                                   ),
                                   selectedTextStyle: const TextStyle(
@@ -237,6 +244,7 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
                                   ),
                                   markerDecoration: const BoxDecoration(
                                     color: Color(0xFFF97316),
+                                    shape: BoxShape.rectangle,
                                     borderRadius: BorderRadius.all(Radius.circular(2)),
                                   ),
                                   markerSize: 4,

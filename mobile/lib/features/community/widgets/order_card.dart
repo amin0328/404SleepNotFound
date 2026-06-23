@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/group_order.dart';
 import 'order_status_stepper.dart';
+import 'join_order_sheet.dart';
 import 'package:mobile/features/community/screens/cost_split_screen.dart';
 
 class OrderCard extends StatelessWidget {
@@ -14,6 +15,22 @@ class OrderCard extends StatelessWidget {
     this.onJoin,
     this.onLeave,
   });
+
+  Future<void> _openJoinSheet(BuildContext context) async {
+    final joined = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => JoinOrderSheet(
+        orderId: order.id,
+        orderTitle: order.title,
+        originCountry: order.country,
+      ),
+    );
+    if (joined == true) {
+      onJoin?.call();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -320,7 +337,7 @@ class OrderCard extends StatelessWidget {
                     ],
                   ),
                   child: TextButton.icon(
-                    onPressed: onJoin,
+                    onPressed: () => _openJoinSheet(context),
                     icon: const Icon(
                       Icons.add_circle_outline,
                       size: 14,

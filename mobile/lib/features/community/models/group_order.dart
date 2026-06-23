@@ -59,6 +59,7 @@ class GroupOrder {
   final String flagEmoji;
   final String title;
   final String storeName;
+  final String country;
   final OrderStatus status;
   final String deadline;
   final String sgdCost;
@@ -75,6 +76,7 @@ class GroupOrder {
     required this.flagEmoji,
     required this.title,
     required this.storeName,
+    required this.country,
     required this.status,
     required this.deadline,
     required this.sgdCost,
@@ -103,6 +105,7 @@ class GroupOrder {
       flagEmoji: '🌍',
       title: json['order_name'] ?? '',
       storeName: json['store'] ?? '',
+      country: json['country'] ?? '',
       status: OrderStatusExtension.fromApi(json['status']),
       deadline: formattedDeadline,
       sgdCost: 'S\$${totalSgd.toStringAsFixed(2)}',
@@ -121,6 +124,7 @@ class GroupOrder {
         flagEmoji: flagEmoji,
         title: title,
         storeName: storeName,
+        country: country,
         status: status ?? this.status,
         deadline: deadline,
         sgdCost: sgdCost,
@@ -140,6 +144,7 @@ final List<GroupOrder> sampleGroupOrders = [
     flagEmoji: '🇰🇷',
     title: 'Olive Young Haul – July',
     storeName: 'Olive Young · Beauty',
+    country: 'South Korea',
     status: OrderStatus.open,
     deadline: 'Jul 15',
     sgdCost: 'S\$0',

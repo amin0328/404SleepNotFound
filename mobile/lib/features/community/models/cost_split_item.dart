@@ -5,12 +5,18 @@ class CostSplitItem {
   final bool paid;
   final double itemCostSgd;
   final double shippingSplitSgd;
+  final String currency;
+  final double totalLocal;
+  final double exchangeRate;
 
   CostSplitItem({
     required this.userId,
     required this.name,
     required this.itemCostSgd,
     required this.shippingSplitSgd,
+    required this.currency,
+    required this.totalLocal,
+    required this.exchangeRate,
     this.isHost = false,
     this.paid = false,
   });
@@ -26,12 +32,14 @@ class CostSplitItem {
 
     return CostSplitItem(
       userId: json['user_id']?.toString() ?? '',
-      name: (json['name'] ?? json['user_name'] ?? 'Unknown').toString(),
+      name: (json['name'] ?? 'Unknown').toString(),
       isHost: json['is_host'] == true,
       paid: (json['paid'] ?? json['is_paid']) == true,
-      itemCostSgd: parseNum(json['item_cost_sgd'] ?? json['items_cost_sgd']),
-      shippingSplitSgd:
-          parseNum(json['shipping_split_sgd'] ?? json['split_shipping_sgd']),
+      itemCostSgd: parseNum(json['items_sgd']),
+      shippingSplitSgd: parseNum(json['shipping_share_sgd']),
+      currency: (json['currency'] ?? 'SGD').toString().toUpperCase(),
+      totalLocal: parseNum(json['total_local']),
+      exchangeRate: parseNum(json['exchange_rate']) == 0 ? 1 : parseNum(json['exchange_rate']),
     );
   }
 }

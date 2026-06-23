@@ -39,6 +39,8 @@ class CommunityService {
     required String title,
     String? body,
     List<String>? tags,
+    int? groupSize,
+    String? moveInDate,
   }) async {
     try {
       final res = await ApiClient.dio.post('/posts', data: {
@@ -46,6 +48,8 @@ class CommunityService {
         'title': title,
         if (body != null) 'body': body,
         if (tags != null) 'tags': tags,
+        if (groupSize != null) 'group_size': groupSize,
+        if (moveInDate != null) 'move_in_date': moveInDate,
       });
       return res.data['post'];
     } on DioException catch (e) {

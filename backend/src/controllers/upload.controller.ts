@@ -3,14 +3,13 @@ import { randomUUID } from 'crypto';
 import { supabase, STORAGE_BUCKET } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
 import multer from 'multer';
-import type { Multer } from 'multer';
 
 const upload = multer();
 
 export async function uploadListingImage(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as AuthRequest).userId!;
-    const file = (req as Request & { file?: Express.Multer.File }).file;
+    const file = (req as Request & { file?: any }).file;
 
     if (!file) {
       res.status(400).json({ error: 'No image file provided.' });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/core/utils/country_data.dart';
 import '../services/order_service.dart';
 
 class CreateGroupOrderSheet extends StatefulWidget {
@@ -14,10 +15,15 @@ class _CreateGroupOrderSheetState extends State<CreateGroupOrderSheet> {
   final _titleController = TextEditingController();
   final _storeController = TextEditingController();
   final _pickupController = TextEditingController();
+  final _shippingCostController = TextEditingController();
   String? _selectedCategory;
+  String? _selectedCountryName;
   int _minParticipants = 2;
   DateTime? _deadline;
   bool _isSubmitting = false;
+
+  List<CountryEntry> _countries = [];
+  bool _isLoadingCountries = true;
 
   static const _categories = [
     'Beauty', 'Clothing', 'Health', 'Household',
@@ -25,10 +31,29 @@ class _CreateGroupOrderSheetState extends State<CreateGroupOrderSheet> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadCountries();
+  }
+
+  Future<void> _loadCountries() async {
+    try {
+      final countries = await loadCountries();
+      setState(() {
+        _countries = countries;
+        _isLoadingCountries = false;
+      });
+    } catch (_) {
+      setState(() => _isLoadingCountries = false);
+    }
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _storeController.dispose();
     _pickupController.dispose();
+    _shippingCostController.dispose();
     super.dispose();
   }
 
@@ -81,10 +106,44 @@ class _CreateGroupOrderSheetState extends State<CreateGroupOrderSheet> {
             ),
 
             _FormField(
-              label: 'Origin country / store',
+              label: 'Origin country',
+              child: _isLoadingCountries
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    )
+                  : DropdownButtonFormField<String>(
+                      value: _selectedCountryName,
+                      isExpanded: true,
+                      menuMaxHeight: 320,
+                      hint: const Text('Select country',
+                          style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8))),
+                      decoration: _inputDecoration(''),
+                      items: _countries
+                          .map((c) => DropdownMenuItem(
+                                value: c['name'],
+                                child: Text('${c['name']} (${c['currency']})'),
+                              ))
+                          .toList(),
+                      onChanged: (v) => setState(() => _selectedCountryName = v),
+                    ),
+            ),
+
+            _FormField(
+              label: 'Store name',
               child: TextField(
                 controller: _storeController,
-                decoration: _inputDecoration('e.g. Olive Young · Beauty'),
+                decoration: _inputDecoration('e.g. Olive Young'),
               ),
             ),
 
@@ -99,6 +158,18 @@ class _CreateGroupOrderSheetState extends State<CreateGroupOrderSheet> {
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
                 onChanged: (v) => setState(() => _selectedCategory = v),
+              ),
+            ),
+
+            _FormField(
+              label: 'Estimated shipping cost (SGD)',
+              child: TextField(
+                controller: _shippingCostController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: _inputDecoration('e.g. 15.00').copyWith(
+                  prefixText: 'S\$ ',
+                  prefixStyle: const TextStyle(fontSize: 14, color: Color(0xFF1E1B4B)),
+                ),
               ),
             ),
 
@@ -262,13 +333,17 @@ class _CreateGroupOrderSheetState extends State<CreateGroupOrderSheet> {
   }
 
   Future<void> _handleSubmit() async {
+    final shippingCost = double.tryParse(_shippingCostController.text.trim());
+
     if (_titleController.text.trim().isEmpty ||
         _storeController.text.trim().isEmpty ||
+        _selectedCountryName == null ||
         _selectedCategory == null ||
+        shippingCost == null ||
         _deadline == null ||
         _pickupController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields.')),
+        const SnackBar(content: Text('Please fill in all fields, including origin country and shipping cost.')),
       );
       return;
     }
@@ -278,13 +353,13 @@ class _CreateGroupOrderSheetState extends State<CreateGroupOrderSheet> {
     try {
       await OrderService.createOrder(
         store: _storeController.text.trim(),
-        country: 'Unknown',
+        country: _selectedCountryName!,
         category: _selectedCategory!,
         orderName: _titleController.text.trim(),
         minParticipants: _minParticipants,
         deadline: _deadline!.toIso8601String().substring(0, 10),
         pickupSpot: _pickupController.text.trim(),
-        shippingCostSgd: 0,
+        shippingCostSgd: shippingCost,
       );
 
       if (mounted) {

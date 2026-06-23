@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/services/currency_service.dart';
 import 'package:mobile/features/community/models/cost_split_item.dart';
 import 'package:mobile/features/community/services/order_service.dart';
 
@@ -27,7 +26,6 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
   bool _loading = true;
   String? _error;
   List<CostSplitItem> _items = [];
-  double? _krwRate;
 
   @override
   void initState() {
@@ -43,10 +41,8 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
     try {
       final raw = await OrderService.getCostSplit(widget.orderId);
       final items = raw.map((e) => CostSplitItem.fromJson(e)).toList();
-      final rate = await CurrencyService.getRate('KRW');
       setState(() {
         _items = items;
-        _krwRate = rate;
         _loading = false;
       });
     } catch (e) {
@@ -59,17 +55,24 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
 
   String _sgd(double v) => 'S\$${v.toStringAsFixed(2)}';
 
-  String? _krw(double sgd) {
-    if (_krwRate == null) return null;
-    final v = (sgd * _krwRate!).round();
-    final formatted = v.toString().replaceAllMapped(
+  String _formatLocal(double v) {
+    final rounded = v.round();
+    return rounded.toString().replaceAllMapped(
           RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
           (m) => '${m[1]},',
         );
-    return '≈ ₩$formatted';
+  }
+
+  String? _localLine(CostSplitItem item) {
+    if (item.currency == 'SGD') return null;
+    return '≈ ${_formatLocal(item.totalLocal)} ${item.currency}';
   }
 
   double get _totalSgd => _items.fold(0, (sum, i) => sum + i.totalSgd);
+
+  double get _totalLocal => _items.fold(0, (sum, i) => sum + i.totalLocal);
+
+  String get _viewerCurrency => _items.isNotEmpty ? _items.first.currency : 'SGD';
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +152,7 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
   }
 
   Widget _buildSummaryCard() {
-    final krw = _krw(_totalSgd);
+    final showLocal = _viewerCurrency != 'SGD';
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -172,9 +175,10 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          if (krw != null) ...[
+          if (showLocal) ...[
             const SizedBox(height: 2),
-            Text(krw, style: const TextStyle(color: _muted, fontFamily: 'Jost', fontSize: 13)),
+            Text('≈ ${_formatLocal(_totalLocal)} $_viewerCurrency',
+                style: const TextStyle(color: _muted, fontFamily: 'Jost', fontSize: 13)),
           ],
           const SizedBox(height: 10),
           Text('${_items.length} participants',
@@ -185,7 +189,7 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
   }
 
   Widget _buildParticipantRow(CostSplitItem item) {
-    final krw = _krw(item.totalSgd);
+    final localLine = _localLine(item);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -256,8 +260,8 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              if (krw != null)
-                Text(krw, style: const TextStyle(color: _muted, fontFamily: 'Jost', fontSize: 10)),
+              if (localLine != null)
+                Text(localLine, style: const TextStyle(color: _muted, fontFamily: 'Jost', fontSize: 10)),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),

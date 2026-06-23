@@ -5,6 +5,7 @@ import 'widgets/buddy_card.dart';
 import 'widgets/category_filter_bar.dart';
 import 'widgets/order_card.dart';
 import 'widgets/create_group_order_sheet.dart';
+import 'widgets/create_post_sheet.dart';
 import 'services/community_service.dart';
 import 'services/order_service.dart';
 
@@ -380,8 +381,13 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Create buddy post — coming soon!')),
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => CreatePostSheet(
+          onCreated: _loadPosts,
+        ),
       );
     }
   }
@@ -420,23 +426,11 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
   }
 
   void _handleJoin(GroupOrder order) async {
-    try {
-      await OrderService.joinOrder(order.id, []);
-      setState(() {
-        final idx = _orders.indexWhere((o) => o.id == order.id);
-        if (idx != -1) _orders[idx] = _orders[idx].copyWith(isJoined: true);
-      });
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Joined "${order.title}"!')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-        );
-      }
+    await _loadOrders();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Joined "${order.title}"!')),
+      );
     }
   }
 

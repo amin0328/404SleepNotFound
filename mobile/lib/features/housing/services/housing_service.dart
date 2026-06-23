@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:mobile/core/api/api_client.dart';
 import '../models/listing_model.dart';
@@ -42,6 +43,23 @@ class HousingService {
     }
   }
 
+  /// Uploads an image file to the backend, which forwards it to Supabase
+  /// Storage and returns a public URL. Call this BEFORE createListing if
+  /// the user attached a photo.
+  static Future<String> uploadImage(File imageFile) async {
+    try {
+      final fileName = imageFile.path.split('/').last;
+      final formData = FormData.fromMap({
+        'image': await MultipartFile.fromFile(imageFile.path, filename: fileName),
+      });
+      final res = await ApiClient.dio.post('/listings/upload-image', data: formData);
+      return res.data['image_url'] as String;
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Failed to upload image.';
+      throw Exception(message);
+    }
+  }
+
   static Future<ListingModel> createListing({
     required String title,
     required double priceSgd,
@@ -52,6 +70,7 @@ class HousingService {
     String? url,
     String? availableFrom,
     String? notes,
+    String? imageUrl,
   }) async {
     try {
       final res = await ApiClient.dio.post('/listings', data: {
@@ -64,6 +83,7 @@ class HousingService {
         if (url != null) 'url': url,
         if (availableFrom != null) 'available_from': availableFrom,
         if (notes != null) 'notes': notes,
+        if (imageUrl != null) 'image_url': imageUrl,
       });
       return ListingModel.fromJson(res.data['listing']);
     } on DioException catch (e) {

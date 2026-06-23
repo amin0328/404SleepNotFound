@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/housing_service.dart';
 
 class CreateListingSheet extends StatefulWidget {
@@ -21,6 +23,9 @@ class _CreateListingSheetState extends State<CreateListingSheet> {
   int? _leaseMonths;
   bool _isSubmitting = false;
 
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
   static const _locations = ['Central', 'Northern', 'Southern', 'Eastern', 'Western'];
   static const _types = ['hdb', 'condo', 'landed'];
   static const _rooms = ['share', 'private', 'studio'];
@@ -32,6 +37,17 @@ class _CreateListingSheetState extends State<CreateListingSheet> {
     _urlController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+      maxWidth: 1600,
+    );
+    if (picked != null) {
+      setState(() => _selectedImage = File(picked.path));
+    }
   }
 
   Future<void> _handleSubmit() async {
@@ -49,6 +65,11 @@ class _CreateListingSheetState extends State<CreateListingSheet> {
     setState(() => _isSubmitting = true);
 
     try {
+      String? imageUrl;
+      if (_selectedImage != null) {
+        imageUrl = await HousingService.uploadImage(_selectedImage!);
+      }
+
       await HousingService.createListing(
         title: _titleController.text.trim(),
         priceSgd: price,
@@ -58,6 +79,7 @@ class _CreateListingSheetState extends State<CreateListingSheet> {
         leaseMonths: _leaseMonths,
         url: _urlController.text.trim().isEmpty ? null : _urlController.text.trim(),
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        imageUrl: imageUrl,
       );
 
       if (mounted) {
@@ -132,6 +154,56 @@ class _CreateListingSheetState extends State<CreateListingSheet> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF1E1B4B)),
             ),
             const SizedBox(height: 20),
+
+            _FormField(
+              label: 'Photo (optional)',
+              child: GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 150,
+                  width: double.infinity,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: _selectedImage == null
+                      ? const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add_a_photo_outlined, color: Color(0xFF94A3B8), size: 28),
+                              SizedBox(height: 8),
+                              Text('Tap to add a photo',
+                                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                            ],
+                          ),
+                        )
+                      : Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.file(_selectedImage!, fit: BoxFit.cover),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: () => setState(() => _selectedImage = null),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, size: 16, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ),
 
             _FormField(
               label: 'Title',

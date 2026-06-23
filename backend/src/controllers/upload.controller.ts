@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { supabase, STORAGE_BUCKET } from '../config/supabase';
 import { AuthRequest } from '../middleware/auth';
+import multer from 'multer';
+import type { Multer } from 'multer';
+
+const upload = multer();
 
 export async function uploadListingImage(req: Request, res: Response): Promise<void> {
   try {

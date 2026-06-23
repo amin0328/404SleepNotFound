@@ -184,7 +184,7 @@ export async function getCostSplit(orderId: string, userCurrency?: string) {
   }
 
   return rows.map((p) => {
-    const totalSgd = (p.item_cost_sgd || 0) + (p.split_shipping_sgd || 0);
+    const totalSgd = (parseFloat(p.item_cost_sgd) || 0) + (parseFloat(p.split_shipping_sgd) || 0);
     const currency = userCurrency || p.home_currency || 'SGD';
     const rate = rates[currency] ?? 1;
 

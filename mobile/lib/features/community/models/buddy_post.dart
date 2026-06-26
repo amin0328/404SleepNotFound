@@ -97,6 +97,7 @@ class BuddyPost {
   final List<String> tags;
   final List<LifestyleDetail> lifestyleDetails;
   final bool isFavorited;
+  final bool isMine;
 
   const BuddyPost({
     required this.id,
@@ -109,6 +110,7 @@ class BuddyPost {
     required this.tags,
     this.lifestyleDetails = const [],
     this.isFavorited = false,
+    this.isMine = false, 
   });
 
   factory BuddyPost.fromJson(Map<String, dynamic> json) {
@@ -126,10 +128,11 @@ class BuddyPost {
       category: _parseCategory(json['category']),
       tags: List<String>.from(json['tags'] ?? []),
       isFavorited: json['is_favorited'] == true,
+      isMine: json['is_mine'] == true,
     );
   }
 
-  BuddyPost copyWith({bool? isFavorited}) => BuddyPost(
+  BuddyPost copyWith({bool? isFavorited, bool? isMine}) => BuddyPost(
         id: id,
         emoji: emoji,
         name: name,
@@ -140,6 +143,7 @@ class BuddyPost {
         tags: tags,
         lifestyleDetails: lifestyleDetails,
         isFavorited: isFavorited ?? this.isFavorited,
+        isMine: isMine ?? this.isMine, 
       );
 
   static PostCategory _parseCategory(String? cat) {

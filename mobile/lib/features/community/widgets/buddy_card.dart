@@ -59,15 +59,37 @@ class BuddyCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            post.name,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E1B4B),
+                          Flexible(
+                            child: Text(
+                              post.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E1B4B),
+                              ),
                             ),
                           ),
-                          if (post.matchPercent != null) ...[
+                          if (post.isMine) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              child: const Text(
+                                'You',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF7C3AED),
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (post.matchPercent != null && !post.isMine) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -185,40 +207,68 @@ class BuddyCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               height: 40,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: cat.buttonGradient,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: cat.color.withValues(alpha: 0.25),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
+              child: post.isMine
+                  ? DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              size: 14,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Your post',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: cat.buttonGradient,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: cat.color.withValues(alpha: 0.25),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextButton.icon(
+                        onPressed: onMessage,
+                        icon: const Icon(
+                          Icons.chat_bubble_outline,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Send Message',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-                child: TextButton.icon(
-                  onPressed: onMessage,
-                  icon: const Icon(
-                    Icons.chat_bubble_outline,
-                    size: 14,
-                    color: Colors.white,
-                  ),
-                  label: const Text(
-                    'Send Message',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
             ),
           ],
         ),

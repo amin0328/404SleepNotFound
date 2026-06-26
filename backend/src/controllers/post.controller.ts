@@ -15,14 +15,13 @@ export async function getPosts(req: Request, res: Response): Promise<void> {
     const me = meResult.rows[0];
 
     const values: unknown[] = [userId];
-    const conditions: string[] = ['p.author_id != $1'];
+    const conditions: string[] = [];   // ← self-exclusion 제거: 본인 글도 포함
     let idx = 2;
 
     if (category && typeof category === 'string' && category !== 'all') {
       conditions.push(`LOWER(p.category) = $${idx++}`);
       values.push(category.toLowerCase());
     }
-
     if (tags && typeof tags === 'string') {
       const tagList = tags.split(',').map(t => t.trim()).filter(Boolean);
       if (tagList.length > 0) {
@@ -39,16 +38,11 @@ export async function getPosts(req: Request, res: Response): Promise<void> {
          p.tags, p.move_in_date, p.created_at,
          u.id        AS author_id,
          u.name      AS author_name,
-         u.avatar_url,
          u.major,
          u.home_country,
-         u.nationality,
-         u.academic_year,
-         u.bio,
          u.lifestyle,
-         u.course_codes,
-         u.study_locations,
-         CASE WHEN pf.user_id IS NOT NULL THEN true ELSE false END AS is_favorited
+         CASE WHEN pf.user_id IS NOT NULL THEN true ELSE false END AS is_favorited,
+         (p.author_id = $1) AS is_mine
        FROM posts p
        JOIN users u ON u.id = p.author_id
        LEFT JOIN post_favorites pf ON pf.post_id = p.id AND pf.user_id = $1
@@ -67,7 +61,6 @@ export async function getPosts(req: Request, res: Response): Promise<void> {
     }));
 
     posts.sort((a, b) => b.match_percentage - a.match_percentage);
-
     res.json({ posts, total: posts.length });
   } catch (err) {
     console.error('[getPosts]', err);

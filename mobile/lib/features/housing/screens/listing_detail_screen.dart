@@ -131,6 +131,36 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (listing.imageUrl != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                listing.imageUrl!,
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: double.infinity,
+                  height: 200,
+                  color: const Color(0xFFF1F5F9),
+                  child: const Icon(Icons.image_not_supported_outlined,
+                      color: Color(0xFF94A3B8), size: 32),
+                ),
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    width: double.infinity,
+                    height: 200,
+                    color: const Color(0xFFF1F5F9),
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C3AED)),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           Row(
             children: [
               _badge(listing.source, const Color(0xFF7C3AED), const Color(0xFFF1F0FF)),

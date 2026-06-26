@@ -27,11 +27,13 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
   Future<void> _loadDeadlines() async {
     try {
       final deadlines = await DeadlineService.getDeadlines();
+      if (!mounted) return;
       setState(() {
         _deadlines = deadlines;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }
@@ -57,9 +59,11 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
         onSave: (deadline) async {
           if (existing == null) {
             final created = await DeadlineService.createDeadline(deadline);
+            if (!mounted) return;
             setState(() => _deadlines.add(created));
           } else {
             final updated = await DeadlineService.updateDeadline(deadline);
+            if (!mounted) return;
             final i = _deadlines.indexWhere((d) => d.id == existing.id);
             if (i != -1) setState(() => _deadlines[i] = updated);
           }

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/housing_service.dart';
@@ -23,7 +23,8 @@ class _CreateListingSheetState extends State<CreateListingSheet> {
   int? _leaseMonths;
   bool _isSubmitting = false;
 
-  File? _selectedImage;
+  XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
   final ImagePicker _picker = ImagePicker();
 
   static const _locations = ['Central', 'Northern', 'Southern', 'Eastern', 'Western'];
@@ -38,7 +39,7 @@ class _CreateListingSheetState extends State<CreateListingSheet> {
     _notesController.dispose();
     super.dispose();
   }
-
+ 
   Future<void> _pickImage() async {
     final picked = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -46,7 +47,11 @@ class _CreateListingSheetState extends State<CreateListingSheet> {
       maxWidth: 1600,
     );
     if (picked != null) {
-      setState(() => _selectedImage = File(picked.path));
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _selectedImage = picked;
+        _selectedImageBytes = bytes;
+      });
     }
   }
 
@@ -182,13 +187,16 @@ class _CreateListingSheetState extends State<CreateListingSheet> {
                         )
                       : Stack(
                           fit: StackFit.expand,
-                          children: [
-                            Image.file(_selectedImage!, fit: BoxFit.cover),
+                          children: [    
+                            Image.memory(_selectedImageBytes!, fit: BoxFit.cover),
                             Positioned(
                               top: 8,
                               right: 8,
                               child: GestureDetector(
-                                onTap: () => setState(() => _selectedImage = null),
+                                onTap: () => setState(() {
+                                  _selectedImage = null;
+                                  _selectedImageBytes = null;
+                                }),
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: const BoxDecoration(

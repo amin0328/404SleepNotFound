@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile/core/api/api_client.dart';
 import '../models/listing_model.dart';
 
@@ -42,15 +42,12 @@ class HousingService {
       throw Exception(message);
     }
   }
-
-  /// Uploads an image file to the backend, which forwards it to Supabase
-  /// Storage and returns a public URL. Call this BEFORE createListing if
-  /// the user attached a photo.
-  static Future<String> uploadImage(File imageFile) async {
+ 
+  static Future<String> uploadImage(XFile imageFile) async {
     try {
-      final fileName = imageFile.path.split('/').last;
+      final bytes = await imageFile.readAsBytes();
       final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(imageFile.path, filename: fileName),
+        'image': MultipartFile.fromBytes(bytes, filename: imageFile.name),
       });
       final res = await ApiClient.dio.post('/listings/upload-image', data: formData);
       return res.data['image_url'] as String;

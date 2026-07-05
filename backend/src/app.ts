@@ -12,6 +12,7 @@ import postRoutes from './routes/posts.routes';
 import currencyRoutes from './routes/currency.routes';
 import { scrapeSRX } from './scraper/srx.scraper';
 import notificationRoutes from './routes/notification.routes';
+import chatRoutes from './routes/chat.routes';
 
 const app = express();
 
@@ -32,5 +33,6 @@ app.use('/v1/currency', currencyRoutes);
 app.use('/v1/orders', orderRoutes);
 app.use('/v1/users', notificationRoutes);
 app.use(errorHandler);
+app.use('/v1/chat', chatRoutes);
 
 export default app;

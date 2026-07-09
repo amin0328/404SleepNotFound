@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/features/deadlines/screens/deadline_screen.dart';
 import 'package:mobile/features/housing/screens/housing_screen.dart';
 import 'package:mobile/features/community/community_board_screen.dart';
+import 'package:mobile/features/chat/screens/inbox_screen.dart';
 import 'package:mobile/features/profile/screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
     DeadlineScreen(),
     HousingScreen(),
     CommunityBoardScreen(),
+    InboxScreen(),
     ProfileScreen(),
   ];
 
@@ -26,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),
         selectedItemColor: const Color(0xFF7C3AED),
@@ -47,6 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.people_outline),
             activeIcon: Icon(Icons.people),
             label: 'Community',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
+            label: 'Chat',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

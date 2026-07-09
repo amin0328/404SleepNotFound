@@ -8,6 +8,9 @@ import 'widgets/create_group_order_sheet.dart';
 import 'widgets/create_post_sheet.dart';
 import 'services/community_service.dart';
 import 'services/order_service.dart';
+import 'package:mobile/core/models/conversation.dart';
+import 'package:mobile/features/chat/services/chat_service.dart';
+import 'package:mobile/features/chat/screens/chat_screen.dart';
 
 enum CommunityTab { buddyMatch, groupOrders }
 
@@ -393,13 +396,30 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
   }
 
   void _handleSendMessage(BuddyPost post) async {
-    try {
-      await CommunityService.expressInterest(post.id);
+    if (post.authorId == null) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Interest sent to ${post.name}!')),
+          const SnackBar(content: Text('Unable to start a chat with this user.')),
         );
       }
+      return;
+    }
+
+    try {
+      final conversationId = await ChatService.startDirectChat(post.authorId!);
+      if (!context.mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            conversation: Conversation(
+              id: conversationId,
+              type: ConversationType.direct,
+              otherUserId: post.authorId,
+              otherUserName: post.name,
+            ),
+          ),
+        ),
+      );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

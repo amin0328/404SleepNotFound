@@ -5,11 +5,17 @@ import 'package:mobile/features/auth/login_screen.dart';
 import 'package:mobile/features/auth/register_screen.dart';
 import 'package:mobile/features/home/home_screen.dart';
 import 'package:mobile/core/api/api_client.dart';
+import 'package:mobile/core/navigation/navigator_key.dart';
+import 'package:mobile/core/services/push_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiClient.init();
   final isLoggedIn = await ApiClient.hasToken();
+
+  if (isLoggedIn) {
+    PushService.instance.init();
+  }
 
   runApp(ProviderScope(
     child: NusHubApp(isLoggedIn: isLoggedIn),
@@ -23,6 +29,7 @@ class NusHubApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'NUS Hub',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

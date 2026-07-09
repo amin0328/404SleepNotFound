@@ -88,6 +88,7 @@ class LifestyleDetail {
 
 class BuddyPost {
   final String id;
+  final String? authorId;
   final String emoji;
   final String name;
   final int? matchPercent;
@@ -101,6 +102,7 @@ class BuddyPost {
 
   const BuddyPost({
     required this.id,
+    this.authorId,
     required this.emoji,
     required this.name,
     this.matchPercent,
@@ -116,6 +118,7 @@ class BuddyPost {
   factory BuddyPost.fromJson(Map<String, dynamic> json) {
     return BuddyPost(
       id: json['id'] ?? '',
+      authorId: json['author_id']?.toString(),
       emoji: '🧑‍💻',
       name: json['author_name'] ?? '',
       matchPercent: json['match_percentage'] as int?,
@@ -134,6 +137,7 @@ class BuddyPost {
 
   BuddyPost copyWith({bool? isFavorited, bool? isMine}) => BuddyPost(
         id: id,
+        authorId: authorId,
         emoji: emoji,
         name: name,
         matchPercent: matchPercent,
@@ -156,6 +160,7 @@ class BuddyPost {
   }
 }
 
+/*
 // mock data
 final List<BuddyPost> sampleBuddyPosts = [
   BuddyPost(
@@ -248,3 +253,4 @@ final List<BuddyPost> sampleBuddyPosts = [
     tags: ['Gaming', 'K-pop', 'Gym'],
   ),
 ];
+*/

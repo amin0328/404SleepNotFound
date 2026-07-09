@@ -55,7 +55,18 @@ export async function saveMessage(
     [senderId, body, conversationId ?? null, groupConversationId ?? null],
   );
 
-  return result.rows[0];
+  const message = result.rows[0];
+
+  const userResult = await pool.query(
+    'SELECT name, avatar_url FROM users WHERE id = $1',
+    [senderId],
+  );
+
+  return {
+    ...message,
+    sender_name: userResult.rows[0]?.name ?? null,
+    sender_avatar: userResult.rows[0]?.avatar_url ?? null,
+  };
 }
 
 export async function getMessages(

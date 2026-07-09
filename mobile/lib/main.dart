@@ -26,6 +26,7 @@ class NusHubApp extends StatelessWidget {
       title: 'NUS Hub',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        fontFamily: 'Jost',
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF003D7C)),
         useMaterial3: true,
       ),

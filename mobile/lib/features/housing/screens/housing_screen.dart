@@ -8,6 +8,8 @@ import 'listing_detail_screen.dart';
 import 'saved_listings_screen.dart';
 import 'package:mobile/core/providers/user_provider.dart';
 
+enum _SortOrder { priceAsc, priceDesc }
+
 class HousingScreen extends ConsumerStatefulWidget {
   const HousingScreen({super.key});
 
@@ -21,6 +23,7 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
   String _searchQuery = '';
   List<ListingModel> _listings = [];
   bool _isLoading = true;
+  _SortOrder _sortOrder = _SortOrder.priceAsc;
 
   final List<String> _regions = ['All', 'Central', 'Northern', 'Southern', 'Eastern', 'Western'];
 
@@ -48,6 +51,14 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
   void _onRegionChanged(String region) {
     setState(() => _selectedRegion = region);
     _loadListings();
+  }
+
+  void _toggleSort() {
+    setState(() {
+      _sortOrder = _sortOrder == _SortOrder.priceAsc
+          ? _SortOrder.priceDesc
+          : _SortOrder.priceAsc;
+    });
   }
 
   Future<void> _handleSaveToggle(ListingModel listing, bool save) async {
@@ -103,12 +114,18 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
   }
 
   List<ListingModel> get _filteredListings {
-    return _listings.where((l) {
+    final filtered = _listings.where((l) {
       final matchesSearch = _searchQuery.isEmpty ||
           l.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           l.address.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesSearch;
     }).toList();
+
+    filtered.sort((a, b) => _sortOrder == _SortOrder.priceAsc
+        ? a.pricePerMonth.compareTo(b.pricePerMonth)
+        : b.pricePerMonth.compareTo(a.pricePerMonth));
+
+    return filtered;
   }
 
   int get _savedCount => _listings.where((l) => l.isSaved).length;
@@ -282,8 +299,13 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
                               children: [
                                 Text('${_filteredListings.length} results',
                                     style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontFamily: 'Jost')),
-                                const Text('Price ↑',
-                                    style: TextStyle(color: Color(0xFF7C3AED), fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'Jost')),
+                                GestureDetector(
+                                  onTap: _toggleSort,
+                                  child: Text(
+                                    _sortOrder == _SortOrder.priceAsc ? 'Price ↑' : 'Price ↓',
+                                    style: const TextStyle(color: Color(0xFF7C3AED), fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'Jost'),
+                                  ),
+                                ),
                               ],
                             ),
                           ),

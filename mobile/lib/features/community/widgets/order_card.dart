@@ -3,6 +3,9 @@ import '../models/group_order.dart';
 import 'order_status_stepper.dart';
 import 'join_order_sheet.dart';
 import 'package:mobile/features/community/screens/cost_split_screen.dart';
+import 'package:mobile/core/models/conversation.dart';
+import 'package:mobile/features/chat/services/chat_service.dart';
+import 'package:mobile/features/chat/screens/chat_screen.dart';
 
 class OrderCard extends StatelessWidget {
   final GroupOrder order;
@@ -29,6 +32,32 @@ class OrderCard extends StatelessWidget {
     );
     if (joined == true) {
       onJoin?.call();
+    }
+  }
+
+  Future<void> _openGroupChat(BuildContext context) async {
+    try {
+      final groupConversationId = await ChatService.startGroupChat(order.id);
+      if (!context.mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            conversation: Conversation(
+              id: groupConversationId,
+              type: ConversationType.group,
+              orderId: order.id,
+              orderName: order.title,
+              store: order.storeName,
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
     }
   }
 
@@ -292,31 +321,56 @@ class OrderCard extends StatelessWidget {
 
             const SizedBox(height: 12),
             if (order.isJoined)
-              SizedBox(
-                width: double.infinity,
-                height: 40,
-                child: OutlinedButton.icon(
-                  onPressed: onLeave,
-                  icon: const Icon(
-                    Icons.exit_to_app_outlined,
-                    size: 14,
-                    color: Color(0xFF94A3B8),
-                  ),
-                  label: const Text(
-                    'Leave',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF94A3B8),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 40,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openGroupChat(context),
+                        icon: const Icon(Icons.chat_bubble_outline, size: 14, color: Colors.white),
+                        label: const Text(
+                          'Group Chat',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7C3AED),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 96,
+                    height: 40,
+                    child: OutlinedButton.icon(
+                      onPressed: onLeave,
+                      icon: const Icon(
+                        Icons.exit_to_app_outlined,
+                        size: 14,
+                        color: Color(0xFF94A3B8),
+                      ),
+                      label: const Text(
+                        'Leave',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               )
             else
               SizedBox(

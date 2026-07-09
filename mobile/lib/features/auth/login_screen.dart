@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/shared/widgets/auth_text_field.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
 import 'package:mobile/shared/widgets/app_background.dart';
+import 'package:mobile/core/services/push_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -91,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         email: emailController.text.trim(),
                         password: passwordController.text.trim(),
                       );
+                      PushService.instance.init();
                       if (context.mounted) {
                         Navigator.pushReplacementNamed(context, '/home');
                       }

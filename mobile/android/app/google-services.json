@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "563120994764",
+    "project_id": "nusphere-9171b",
+    "storage_bucket": "nusphere-9171b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563120994764:android:260397a4b57d941dd44569",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAS7x_OdG43YJJbFp9GqlQpBDDiGBmiI5A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -38,5 +38,11 @@ class ApiClient {
     return token != null;
   }
 
+  static Future<String?> getToken() async {
+    return _storage.read(key: 'jwt_token');
+  }
+
+  static String get socketUrl => baseUrl.replaceFirst('/v1', '');
+
   static Dio get dio => _dio;
 }

@@ -4,6 +4,7 @@ import 'package:mobile/features/profile/screens/profile_setup1_screen.dart';
 import 'package:mobile/shared/widgets/auth_text_field.dart';
 import 'package:mobile/shared/widgets/primary_button.dart';
 import 'package:mobile/shared/widgets/app_background.dart';
+import 'package:mobile/core/services/push_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -140,14 +141,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: email,
         password: passwordController.text.trim(),
       );
-      if (context.mounted) {
+      PushService.instance.init();
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const ProfileSetup1Screen()),
         );
       }
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
         );

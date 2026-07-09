@@ -140,7 +140,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = ref.watch(userProvider).value?['id']?.toString();
+    final currentUserId = ref.watch(userProvider).valueOrNull?['id']?.toString();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

@@ -42,7 +42,7 @@ class ApiClient {
     return _storage.read(key: 'jwt_token');
   }
 
-  static String get socketUrl => baseUrl.replaceFirst('/v1', '');
+  static String get socketUrl => '${baseUrl.replaceFirst('/v1', '')}:443';
 
   static Dio get dio => _dio;
 }

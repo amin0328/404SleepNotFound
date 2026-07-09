@@ -27,9 +27,7 @@ class SocketService {
   final _connectionController = StreamController<bool>.broadcast();
 
   Stream<SocketMessageEvent> get messages => _messageController.stream;
-
   Stream<String> get errors => _errorController.stream;
-
   Stream<bool> get connectionState => _connectionController.stream;
 
   bool get isConnected => _socket?.connected ?? false;
@@ -47,7 +45,6 @@ class SocketService {
     _socket = IO.io(
       ApiClient.socketUrl,
       IO.OptionBuilder()
-          .setTransports(['websocket'])
           .setAuth({'token': token})
           .disableAutoConnect()
           .build(),

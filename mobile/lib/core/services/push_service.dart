@@ -3,10 +3,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mobile/core/api/api_client.dart';
 import 'package:mobile/core/navigation/navigator_key.dart';
+import 'package:mobile/firebase_options.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 }
 
 class PushService {
@@ -27,7 +28,7 @@ class PushService {
     if (_initialized) return;
     _initialized = true;
 
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await _initLocalNotifications();
 
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);

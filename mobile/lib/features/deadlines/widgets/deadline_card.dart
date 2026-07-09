@@ -9,15 +9,6 @@ class DeadlineCard extends StatelessWidget {
 
   const DeadlineCard({super.key, required this.deadline, required this.onTap});
 
-  Color get _iconColor {
-    switch (deadline.category) {
-      case DeadlineCategory.visa:    return const Color(0xFF818CF8);
-      case DeadlineCategory.course:  return const Color(0xFF34D399);
-      case DeadlineCategory.lease:   return const Color(0xFFFB923C);
-      case DeadlineCategory.other:   return const Color(0xFFF472B6);
-    }
-  }
-
   Color get _daysColor {
     final days = deadline.dueDate.difference(DateTime.now()).inDays;
     if (days <= 3)  return const Color(0xFFEF4444);
@@ -52,14 +43,14 @@ class DeadlineCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _iconColor.withOpacity(0.09),
+                color: _daysColor.withOpacity(0.09),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
                 child: Container(
                   width: 10,
                   height: 10,
-                  decoration: BoxDecoration(color: _iconColor, borderRadius: BorderRadius.circular(5)),
+                  decoration: BoxDecoration(color: _daysColor, borderRadius: BorderRadius.circular(5)),
                 ),
               ),
             ),

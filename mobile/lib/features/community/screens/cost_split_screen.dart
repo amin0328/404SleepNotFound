@@ -17,11 +17,15 @@ class CostSplitScreen extends StatefulWidget {
 }
 
 class _CostSplitScreenState extends State<CostSplitScreen> {
-  static const _bg = Color(0xFF0F172A);
-  static const _card = Color(0xFF1E293B);
-  static const _border = Color(0xFF334155);
+  static const _bg = Color(0xFFF8FAFC);
+  static const _card = Colors.white;
+  static const _border = Color(0xFFF1F5F9);
   static const _muted = Color(0xFF94A3B8);
+  static const _textPrimary = Color(0xFF1E1B4B);
   static const _accent = Color(0xFF7C3AED);
+  static const _cardShadow = [
+    BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 2)),
+  ];
 
   bool _loading = true;
   String? _error;
@@ -79,9 +83,9 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: Colors.white,
         elevation: 0,
-        foregroundColor: Colors.white,
+        foregroundColor: _textPrimary,
         title: Text(widget.orderTitle,
             style: const TextStyle(fontFamily: 'Jost', fontSize: 16)),
       ),
@@ -139,7 +143,7 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
         const Text(
           'Split by participant',
           style: TextStyle(
-            color: Colors.white,
+            color: _textPrimary,
             fontFamily: 'Jost',
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -159,6 +163,7 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
         color: _card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _border),
+        boxShadow: _cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +174,7 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
           Text(
             _sgd(_totalSgd),
             style: const TextStyle(
-              color: Colors.white,
+              color: _textPrimary,
               fontFamily: 'Jost',
               fontSize: 24,
               fontWeight: FontWeight.w600,
@@ -197,6 +202,7 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
         color: _card,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _border),
+        boxShadow: _cardShadow,
       ),
       child: Row(
         children: [
@@ -219,7 +225,7 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
                     Text(
                       item.name,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: _textPrimary,
                         fontFamily: 'Jost',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -254,7 +260,7 @@ class _CostSplitScreenState extends State<CostSplitScreen> {
               Text(
                 _sgd(item.totalSgd),
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: _textPrimary,
                   fontFamily: 'Jost',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

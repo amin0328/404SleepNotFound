@@ -1,4 +1,5 @@
 import pool from '../config/db';
+import { sendGroupOrderStatusNotification } from './notification.service';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   open:      ['confirmed'],
@@ -156,7 +157,12 @@ export async function updateStatus(orderId: string, newStatus: string, trackingN
     [newStatus, trackingNumber ?? null, orderId],
   );
 
-  return result.rows[0];
+  const order = result.rows[0];
+
+  // Send push notification to all participants and host
+  await sendGroupOrderStatusNotification(orderId, order.order_name, newStatus);
+
+  return order;
 }
 
 export async function getCostSplit(orderId: string, userCurrency?: string) {

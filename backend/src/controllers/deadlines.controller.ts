@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
 import { AuthRequest } from '../middleware/auth';
+import * as DeadlineService from '../services/deadline.service';
 
 function getUrgency(dueDate: string): { score: number; label: string } {
   const today = new Date();
@@ -161,5 +162,54 @@ export async function deleteDeadline(req: Request, res: Response): Promise<void>
   } catch (err) {
     console.error('[deleteDeadline]', err);
     res.status(500).json({ error: 'Internal server error.' });
+  }
+  
+}
+
+export async function getNusCalendar(req: Request, res: Response) {
+  try {
+    const { category, semester } = req.query;
+    let query = 'SELECT * FROM nus_calendar WHERE event_date >= CURRENT_DATE';
+    const values: any[] = [];
+    let i = 1;
+
+    if (category) {
+      query += ` AND category = $${i++}`;
+      values.push(category);
+    }
+    if (semester) {
+      query += ` AND semester = $${i++}`;
+      values.push(semester);
+    }
+
+    query += ' ORDER BY event_date ASC';
+    const result = await pool.query(query, values);
+    res.json({ data: result.rows, total: result.rows.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch NUS calendar' });
+  }
+}
+
+export async function importNusDeadline(req: Request, res: Response) {
+  try {
+    const userId = (req as AuthRequest).userId!;
+    const eventResult = await pool.query(
+      'SELECT * FROM nus_calendar WHERE id = $1',
+      [req.params.id as string]
+    );
+    const event = eventResult.rows[0];
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+
+    const deadline = await DeadlineService.createDeadline(userId, {
+      title: event.title,
+      category: event.category,
+      due_date: event.event_date,
+      reminder_days: [7, 3, 1],
+      notifications_on: true,
+      notes: event.notes
+    });
+    res.status(201).json(deadline);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to import deadline' });
   }
 }

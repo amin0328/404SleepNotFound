@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import { AuthRequest } from '../middleware/auth';
 import { calculateMatchScore } from '../services/matching.service';
+import * as PostService from '../services/post.service';
 
 export async function getPosts(req: Request, res: Response): Promise<void> {
   try {
@@ -67,7 +68,20 @@ export async function getPosts(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Internal server error.' });
   }
 }
+export async function deletePost(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as AuthRequest).userId!;
+    const deleted = await PostService.deletePost(req.params.id as string, userId);
 
+    res.json({ message: 'Post deleted.', id: deleted.id });
+  } catch (err: any) {
+    console.error('[deletePost]', err);
+    const status = err.message?.includes('not found') ? 404
+      : err.message?.includes('Only the author') ? 403
+      : 500;
+    res.status(status).json({ error: err.message || 'Internal server error.' });
+  }
+}
 export async function createPost(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as AuthRequest).userId!;

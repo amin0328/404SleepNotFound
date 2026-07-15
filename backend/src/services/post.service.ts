@@ -73,3 +73,20 @@ export async function getPostById(id: string) {
   );
   return result.rows[0] || null;
 }
+
+export async function deletePost(id: string, userId: string) {
+  const result = await pool.query(
+    'DELETE FROM posts WHERE id = $1 AND author_id = $2 RETURNING id',
+    [id, userId],
+  );
+
+  if (result.rowCount === 0) {
+    const existing = await pool.query('SELECT id FROM posts WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
+      throw new Error('Post not found.');
+    }
+    throw new Error('Only the author can delete this post.');
+  }
+
+  return result.rows[0];
+}

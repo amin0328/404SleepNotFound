@@ -113,10 +113,14 @@ export async function getListings(req: Request, res: Response): Promise<void> {
       `SELECT l.id, l.source, l.title, l.price_sgd, l.location, l.type, l.room,
               l.lease_months, l.url, l.available_from, l.created_at,
               l.posted_by, l.notes, l.image_url,
-              CASE WHEN sl.user_id IS NOT NULL THEN true ELSE false END AS is_saved
+              CASE WHEN sl.user_id IS NOT NULL THEN true ELSE false END AS is_saved,
+              ROUND(AVG(lr.rating)::numeric, 1) AS avg_rating,
+              COUNT(lr.id)::int AS review_count
        FROM listings l
        LEFT JOIN saved_listings sl ON sl.listing_id = l.id AND sl.user_id = $${idx}
+       LEFT JOIN listing_reviews lr ON lr.listing_id = l.id
        ${where}
+       GROUP BY l.id, sl.user_id
        ORDER BY l.available_from ASC NULLS LAST, l.created_at DESC`,
       values,
     );
@@ -198,10 +202,14 @@ export async function getListingById(req: Request, res: Response): Promise<void>
       `SELECT l.id, l.source, l.title, l.price_sgd, l.location, l.type, l.room,
               l.lease_months, l.url, l.available_from, l.created_at,
               l.posted_by, l.notes, l.image_url,
-              CASE WHEN sl.user_id IS NOT NULL THEN true ELSE false END AS is_saved
+              CASE WHEN sl.user_id IS NOT NULL THEN true ELSE false END AS is_saved,
+              ROUND(AVG(lr.rating)::numeric, 1) AS avg_rating,
+              COUNT(lr.id)::int AS review_count
        FROM listings l
        LEFT JOIN saved_listings sl ON sl.listing_id = l.id AND sl.user_id = $2
-       WHERE l.id = $1`,
+       LEFT JOIN listing_reviews lr ON lr.listing_id = l.id
+       WHERE l.id = $1
+       GROUP BY l.id, sl.user_id`,
       [id, userId],
     );
 
@@ -213,6 +221,101 @@ export async function getListingById(req: Request, res: Response): Promise<void>
     res.json({ listing: result.rows[0] });
   } catch (err) {
     console.error('[getListingById]', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+export async function getListingReviews(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const listingResult = await pool.query('SELECT id FROM listings WHERE id = $1', [id]);
+    if (listingResult.rows.length === 0) {
+      res.status(404).json({ error: 'Listing not found.' });
+      return;
+    }
+
+    const reviewsResult = await pool.query(
+      `SELECT lr.id, lr.user_id, u.name AS user_name, u.avatar_url AS user_avatar,
+              lr.rating, lr.comment, lr.created_at
+       FROM listing_reviews lr
+       JOIN users u ON u.id = lr.user_id
+       WHERE lr.listing_id = $1
+       ORDER BY lr.created_at DESC`,
+      [id],
+    );
+
+    const aggregateResult = await pool.query(
+      `SELECT COALESCE(ROUND(AVG(rating)::numeric, 1), 0) AS average_rating,
+              COUNT(id)::int AS review_count
+       FROM listing_reviews
+       WHERE listing_id = $1`,
+      [id],
+    );
+
+    res.json({
+      data: reviewsResult.rows,
+      average_rating: aggregateResult.rows[0].average_rating,
+      review_count: aggregateResult.rows[0].review_count,
+    });
+  } catch (err) {
+    console.error('[getListingReviews]', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+export async function createListingReview(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as AuthRequest).userId!;
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+
+    const numericRating = Number(rating);
+    if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+      res.status(400).json({ error: 'rating must be an integer between 1 and 5.' });
+      return;
+    }
+
+    const listingResult = await pool.query('SELECT id FROM listings WHERE id = $1', [id]);
+    if (listingResult.rows.length === 0) {
+      res.status(404).json({ error: 'Listing not found.' });
+      return;
+    }
+
+    const result = await pool.query(
+      `INSERT INTO listing_reviews (listing_id, user_id, rating, comment)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (listing_id, user_id) DO UPDATE
+       SET rating = EXCLUDED.rating,
+           comment = EXCLUDED.comment
+       RETURNING id, listing_id, user_id, rating, comment, created_at`,
+      [id, userId, numericRating, comment ?? null],
+    );
+
+    res.status(201).json({ review: result.rows[0] });
+  } catch (err) {
+    console.error('[createListingReview]', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+export async function deleteListingReview(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as AuthRequest).userId!;
+    const { id, reviewId } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM listing_reviews WHERE id = $1 AND listing_id = $2 AND user_id = $3 RETURNING id',
+      [reviewId, id, userId],
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Review not found.' });
+      return;
+    }
+
+    res.json({ message: 'Review deleted.', review_id: reviewId });
+  } catch (err) {
+    console.error('[deleteListingReview]', err);
     res.status(500).json({ error: 'Internal server error.' });
   }
 }

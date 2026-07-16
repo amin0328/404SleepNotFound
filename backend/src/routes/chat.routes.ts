@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import {
   getMyConversations,
+  getConversationById,
   startDirectChat,
   startGroupOrderChat,
   getDirectMessages,
@@ -11,6 +12,7 @@ import {
 const router = Router();
 
 router.get('/',                                        requireAuth, getMyConversations);
+router.get('/:conversationId',                        requireAuth, getConversationById);
 router.post('/direct',                                 requireAuth, startDirectChat);
 router.post('/group-order',                            requireAuth, startGroupOrderChat);
 router.get('/direct/:conversationId/messages',         requireAuth, getDirectMessages);

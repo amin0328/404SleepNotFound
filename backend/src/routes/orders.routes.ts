@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import {
   getOrders,
+  getOrderById,
   createOrder,
   deleteOrder,
   joinOrder,
@@ -15,6 +16,7 @@ import {
 const router = Router();
 
 router.get('/',                requireAuth, getOrders);
+router.get('/:id',             requireAuth, getOrderById);
 router.post('/',               requireAuth, createOrder);
 router.delete('/:id',          requireAuth, deleteOrder);
 router.post('/:id/join',       requireAuth, joinOrder);

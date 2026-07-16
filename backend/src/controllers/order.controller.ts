@@ -15,6 +15,24 @@ export async function getOrders(req: Request, res: Response): Promise<void> {
   }
 }
 
+export async function getOrderById(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as AuthRequest).userId!;
+    const orderId = req.params.id as string;
+
+    const order = await OrderService.getOrderById(orderId, userId);
+    if (!order) {
+      res.status(404).json({ error: 'Order not found.' });
+      return;
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error('[getOrderById]', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
 export async function createOrder(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as AuthRequest).userId!;

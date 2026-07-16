@@ -8,6 +8,7 @@ import {
   getGroupMessages,
   getUserConversations,
   getUserGroupConversations,
+  getConversationForUser,
   isConversationMember,
   isGroupConversationMember,
 } from '../services/chat.service';
@@ -25,6 +26,24 @@ export async function getMyConversations(req: Request, res: Response): Promise<v
     res.json({ direct, group });
   } catch (err) {
     console.error('[getMyConversations]', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+export async function getConversationById(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as AuthRequest).userId!;
+    const conversationId = req.params.conversationId as string;
+
+    const conversation = await getConversationForUser(userId, conversationId);
+    if (!conversation) {
+      res.status(404).json({ error: 'Conversation not found.' });
+      return;
+    }
+
+    res.json(conversation);
+  } catch (err) {
+    console.error('[getConversationById]', err);
     res.status(500).json({ error: 'Internal server error.' });
   }
 }

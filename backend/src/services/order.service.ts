@@ -62,6 +62,24 @@ export async function getOrders(userId: string, status?: string, search?: string
   return result.rows;
 }
 
+export async function getOrderById(orderId: string, userId: string) {
+  const result = await pool.query(
+    `SELECT
+       o.*,
+       u.name AS host_name,
+       CASE WHEN om.user_id IS NOT NULL THEN true ELSE false END AS is_joined,
+       om.item_cost_sgd      AS my_item_cost_sgd,
+       om.split_shipping_sgd AS my_split_shipping_sgd
+     FROM group_orders o
+     JOIN users u ON u.id = o.organiser_id
+     LEFT JOIN order_participants om ON om.order_id = o.id AND om.user_id = $2
+     WHERE o.id = $1`,
+    [orderId, userId],
+  );
+
+  return result.rows[0] || null;
+}
+
 export async function createOrder(organiserId: string, data: {
   store: string;
   country: string;

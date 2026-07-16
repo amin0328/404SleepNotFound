@@ -1,5 +1,6 @@
 import pool from '../config/db';
 import { sendGroupOrderStatusNotification } from './notification.service';
+import { getOrCreateGroupConversation, addGroupConversationMember } from './chat.service';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   open:      ['confirmed'],
@@ -138,6 +139,9 @@ export async function joinOrder(
     [orderId, userId, JSON.stringify(items), itemTotal],
   );
 
+  const groupConversationId = await getOrCreateGroupConversation(orderId);
+  await addGroupConversationMember(groupConversationId, userId);
+
   await recalculateSplitShipping(orderId);
 
   const countResult = await pool.query(
@@ -147,11 +151,14 @@ export async function joinOrder(
   const count = parseInt(countResult.rows[0].count);
   const min = orderResult.rows[0].min_participants;
 
+  
   if (count >= min) {
     await pool.query(
       "UPDATE group_orders SET status = 'confirmed' WHERE id = $1 AND status = 'open'",
       [orderId],
     );
+    const orderNameResult = await pool.query('SELECT order_name FROM group_orders WHERE id = $1', [orderId]);
+    await sendGroupOrderStatusNotification(orderId, orderNameResult.rows[0].order_name, 'confirmed');
   }
 
   return { joined: true, order_id: orderId };
@@ -195,12 +202,17 @@ export async function updateStatus(orderId: string, userId: string, newStatus: s
     throw new Error(`Invalid transition: ${currentStatus} → ${newStatus}`);
   }
 
+  
   const result = await pool.query(
     `UPDATE group_orders SET status = $1, tracking_number = $2
-     WHERE id = $3 RETURNING *`,
+    WHERE id = $3 RETURNING *`,
     [newStatus, tracking_number || null, orderId]
   );
-  return result.rows[0];
+
+  const order = result.rows[0];
+  await sendGroupOrderStatusNotification(orderId, order.order_name, newStatus);
+  return order;
+
 }
 
 export async function getCostSplit(orderId: string, userCurrency?: string) {

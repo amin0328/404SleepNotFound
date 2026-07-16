@@ -95,7 +95,7 @@ export async function leaveOrder(req: Request, res: Response): Promise<void> {
 
 export async function updateStatus(req: Request, res: Response) {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as AuthRequest).userId!;
     const { status, tracking_number } = req.body;
     const order = await OrderService.updateStatus(
       req.params.id as string,

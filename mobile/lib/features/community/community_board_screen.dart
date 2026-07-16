@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'models/buddy_post.dart';
 import 'models/group_order.dart';
@@ -8,6 +10,7 @@ import 'widgets/create_group_order_sheet.dart';
 import 'widgets/create_post_sheet.dart';
 import 'services/community_service.dart';
 import 'services/order_service.dart';
+import 'package:mobile/core/auth/auth_service.dart';
 import 'package:mobile/core/models/conversation.dart';
 import 'package:mobile/features/chat/services/chat_service.dart';
 import 'package:mobile/features/chat/screens/chat_screen.dart';
@@ -35,11 +38,30 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
   bool _isLoadingOrders = true;
   String? _ordersError;
 
+  String? _currentUserId;
+  final _orderSearchController = TextEditingController();
+  Timer? _searchDebounce;
+
   @override
   void initState() {
     super.initState();
     _loadPosts();
     _loadOrders();
+    _loadCurrentUser();
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _orderSearchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      final me = await AuthService.getMe();
+      if (mounted) setState(() => _currentUserId = me['id']?.toString());
+    } catch (_) {}
   }
 
   Future<void> _loadPosts() async {
@@ -71,6 +93,7 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
     try {
       final data = await OrderService.getOrders(
         status: _selectedStatus?.apiValue,
+        search: _orderSearchController.text,
       );
       setState(() {
         _orders = data.map((j) => GroupOrder.fromJson(j)).toList();
@@ -211,6 +234,44 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
                   ],
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, size: 18, color: Color(0xFF94A3B8)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _orderSearchController,
+                          onChanged: _onOrderSearchChanged,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF1E1B4B)),
+                          decoration: const InputDecoration(
+                            hintText: 'Search by order or store name',
+                            hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                            border: InputBorder.none,
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                      if (_orderSearchController.text.isNotEmpty)
+                        GestureDetector(
+                          onTap: () {
+                            _orderSearchController.clear();
+                            _loadOrders();
+                          },
+                          child: const Icon(Icons.close, size: 16, color: Color(0xFF94A3B8)),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
               _OrderStatusFilterBar(
                 selected: _selectedStatus,
                 onChanged: (s) {
@@ -257,6 +318,8 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
                               order: order,
                               onJoin: () => _handleJoin(order),
                               onLeave: () => _handleLeave(order),
+                              isOwner: _currentUserId != null && order.organiserId == _currentUserId,
+                              onDelete: () => _handleDeleteOrder(order),
                             );
                           },
                         ),
@@ -461,6 +524,32 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
         final idx = _orders.indexWhere((o) => o.id == order.id);
         if (idx != -1) _orders[idx] = _orders[idx].copyWith(isJoined: false);
       });
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
+  }
+
+  void _onOrderSearchChanged(String _) {
+    setState(() {});
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), _loadOrders);
+  }
+
+  void _handleDeleteOrder(GroupOrder order) async {
+    try {
+      await OrderService.deleteOrder(order.id);
+      setState(() {
+        _orders.removeWhere((o) => o.id == order.id);
+      });
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${order.title}" deleted.')),
+        );
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -2,14 +2,24 @@ import 'package:dio/dio.dart';
 import 'package:mobile/core/api/api_client.dart';
 
 class OrderService {
-  static Future<List<Map<String, dynamic>>> getOrders({String? status}) async {
+  static Future<List<Map<String, dynamic>>> getOrders({String? status, String? search}) async {
     try {
       final res = await ApiClient.dio.get('/orders', queryParameters: {
         if (status != null && status != 'all') 'status': status,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
       });
       return List<Map<String, dynamic>>.from(res.data['data'] ?? []);
     } on DioException catch (e) {
       final message = e.response?.data['error'] ?? 'Failed to load orders.';
+      throw Exception(message);
+    }
+  }
+
+  static Future<void> deleteOrder(String orderId) async {
+    try {
+      await ApiClient.dio.delete('/orders/$orderId');
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Failed to delete order.';
       throw Exception(message);
     }
   }

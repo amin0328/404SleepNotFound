@@ -56,6 +56,7 @@ extension OrderStatusExtension on OrderStatus {
 
 class GroupOrder {
   final String id;
+  final String organiserId;
   final String flagEmoji;
   final String title;
   final String storeName;
@@ -75,6 +76,7 @@ class GroupOrder {
 
   const GroupOrder({
     required this.id,
+    this.organiserId = '',
     required this.flagEmoji,
     required this.title,
     required this.storeName,
@@ -108,6 +110,7 @@ class GroupOrder {
 
     return GroupOrder(
       id: json['id'].toString(),
+      organiserId: (json['organiser_id'] ?? '').toString(),
       flagEmoji: '🌍',
       title: json['order_name'] ?? '',
       storeName: json['store'] ?? '',
@@ -129,6 +132,7 @@ class GroupOrder {
 
   GroupOrder copyWith({bool? isJoined, OrderStatus? status}) => GroupOrder(
         id: id,
+        organiserId: organiserId,
         flagEmoji: flagEmoji,
         title: title,
         storeName: storeName,

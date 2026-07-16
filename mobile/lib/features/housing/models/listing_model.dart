@@ -49,8 +49,8 @@ class ListingModel {
     leaseDuration: json['lease_months'] != null
         ? '${json['lease_months']} months'
         : '',
-    rating: 0.0,
-    reviewCount: 0,
+    rating: double.tryParse((json['avg_rating'] ?? 0).toString()) ?? 0.0,
+    reviewCount: int.tryParse((json['review_count'] ?? 0).toString()) ?? 0,
     tags: List<String>.from(json['tags'] ?? []),
     isSaved: json['is_saved'] ?? false,
     url: json['url'],

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile/core/api/api_client.dart';
 import '../models/listing_model.dart';
+import '../models/listing_review.dart';
 
 class HousingService {
   static Future<List<ListingModel>> getListings({
@@ -94,6 +95,48 @@ class HousingService {
       await ApiClient.dio.delete('/listings/$id');
     } on DioException catch (e) {
       final message = e.response?.data['error'] ?? 'Failed to delete listing.';
+      throw Exception(message);
+    }
+  }
+
+  static Future<Map<String, dynamic>> getListingReviews(String listingId) async {
+    try {
+      final res = await ApiClient.dio.get('/listings/$listingId/reviews');
+      return {
+        'reviews': (res.data['data'] as List)
+            .map((json) => ListingReview.fromJson(json))
+            .toList(),
+        'averageRating': double.tryParse((res.data['average_rating'] ?? 0).toString()) ?? 0.0,
+        'reviewCount': int.tryParse((res.data['review_count'] ?? 0).toString()) ?? 0,
+      };
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Failed to load reviews.';
+      throw Exception(message);
+    }
+  }
+
+  static Future<ListingReview> submitReview(
+    String listingId, {
+    required int rating,
+    String? comment,
+  }) async {
+    try {
+      final res = await ApiClient.dio.post('/listings/$listingId/reviews', data: {
+        'rating': rating,
+        if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
+      });
+      return ListingReview.fromJson(res.data['review']);
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Failed to submit review.';
+      throw Exception(message);
+    }
+  }
+
+  static Future<void> deleteReview(String listingId, String reviewId) async {
+    try {
+      await ApiClient.dio.delete('/listings/$listingId/reviews/$reviewId');
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Failed to delete review.';
       throw Exception(message);
     }
   }

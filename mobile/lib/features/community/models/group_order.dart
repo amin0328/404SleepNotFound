@@ -70,6 +70,8 @@ class GroupOrder {
   final String hostEmoji;
   final String hostName;
   final bool isJoined;
+  final String deliveryFee;
+  final int participantCount;
 
   const GroupOrder({
     required this.id,
@@ -87,12 +89,16 @@ class GroupOrder {
     required this.hostEmoji,
     required this.hostName,
     this.isJoined = false,
+    this.deliveryFee = 'S\$0.00',
+    this.participantCount = 0,
   });
 
   factory GroupOrder.fromJson(Map<String, dynamic> json) {
     final itemCost = double.tryParse((json['my_item_cost_sgd'] ?? 0).toString()) ?? 0;
     final shippingShare = double.tryParse((json['my_split_shipping_sgd'] ?? 0).toString()) ?? 0;
     final totalSgd = itemCost + shippingShare;
+    final totalShippingCost = double.tryParse((json['shipping_cost_sgd'] ?? 0).toString()) ?? 0;
+    final participantCount = int.tryParse((json['participant_count'] ?? 0).toString()) ?? 0;
 
     String formattedDeadline = '';
     if (json['deadline'] != null) {
@@ -116,6 +122,8 @@ class GroupOrder {
       hostEmoji: '👤',
       hostName: json['host_name'] ?? '',
       isJoined: json['is_joined'] ?? false,
+      deliveryFee: 'S\$${totalShippingCost.toStringAsFixed(2)}',
+      participantCount: participantCount,
     );
   }
 
@@ -135,6 +143,8 @@ class GroupOrder {
         hostEmoji: hostEmoji,
         hostName: hostName,
         isJoined: isJoined ?? this.isJoined,
+        deliveryFee: deliveryFee,
+        participantCount: participantCount,
       );
 }
 

@@ -24,6 +24,15 @@ class CommunityService {
     }
   }
 
+  static Future<void> deletePost(String postId) async {
+    try {
+      await ApiClient.dio.delete('/posts/$postId');
+    } on DioException catch (e) {
+      final message = e.response?.data['error'] ?? 'Failed to delete post.';
+      throw Exception(message);
+    }
+  }
+
   static Future<Map<String, dynamic>> expressInterest(String postId) async {
     try {
       final res = await ApiClient.dio.post('/posts/$postId/interest');

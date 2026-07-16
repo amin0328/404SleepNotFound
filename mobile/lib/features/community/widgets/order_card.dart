@@ -13,6 +13,7 @@ class OrderCard extends StatelessWidget {
   final VoidCallback? onLeave;
   final bool isOwner;
   final VoidCallback? onDelete;
+  final VoidCallback? onAdvanceStatus;
 
   const OrderCard({
     super.key,
@@ -21,6 +22,7 @@ class OrderCard extends StatelessWidget {
     this.onLeave,
     this.isOwner = false,
     this.onDelete,
+    this.onAdvanceStatus,
   });
 
   Future<void> _confirmDelete(BuildContext context) async {
@@ -42,6 +44,29 @@ class OrderCard extends StatelessWidget {
       ),
     );
     if (confirmed == true) onDelete?.call();
+  }
+
+  Future<void> _confirmAdvance(BuildContext context, OrderStatus next) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Mark as ${next.label}?'),
+        content: Text(
+          'This moves "${order.title}" to ${next.label} for everyone. This can\'t be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Confirm', style: TextStyle(color: next.color)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) onAdvanceStatus?.call();
   }
 
   Future<void> _openJoinSheet(BuildContext context) async {
@@ -379,6 +404,30 @@ class OrderCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
+            if (isOwner && order.status != OrderStatus.arrived) ...[
+              Builder(builder: (statusContext) {
+                final next = OrderStatus.values[order.status.stepIndex + 1];
+                return SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _confirmAdvance(statusContext, next),
+                    icon: Icon(Icons.local_shipping_outlined, size: 14, color: next.color),
+                    label: Text(
+                      'Mark as ${next.label}',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: next.color),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: next.color),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
             if (order.isJoined)
               Row(
                 children: [

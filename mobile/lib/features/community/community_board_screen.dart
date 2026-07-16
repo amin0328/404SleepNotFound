@@ -202,6 +202,7 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
                             post: _filteredPosts[i],
                             onMessage: () => _handleSendMessage(_filteredPosts[i]),
                             onToggleFavorite: () => _handleToggleFavorite(_filteredPosts[i]),
+                            onDelete: () => _handleDeletePost(_filteredPosts[i]),
                           ),
                         ),
         ),
@@ -320,6 +321,7 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
                               onLeave: () => _handleLeave(order),
                               isOwner: _currentUserId != null && order.organiserId == _currentUserId,
                               onDelete: () => _handleDeleteOrder(order),
+                              onAdvanceStatus: () => _handleAdvanceStatus(order),
                             );
                           },
                         ),
@@ -508,6 +510,26 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
     }
   }
 
+  void _handleDeletePost(BuddyPost post) async {
+    try {
+      await CommunityService.deletePost(post.id);
+      setState(() {
+        _posts.removeWhere((p) => p.id == post.id);
+      });
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post deleted.')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
+  }
+
   void _handleJoin(GroupOrder order) async {
     await _loadOrders();
     if (context.mounted) {
@@ -548,6 +570,28 @@ class _CommunityBoardScreenState extends State<CommunityBoardScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('"${order.title}" deleted.')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
+  }
+
+  void _handleAdvanceStatus(GroupOrder order) async {
+    final next = OrderStatus.values[order.status.stepIndex + 1];
+    try {
+      await OrderService.updateStatus(order.id, next.apiValue);
+      setState(() {
+        final idx = _orders.indexWhere((o) => o.id == order.id);
+        if (idx != -1) _orders[idx] = _orders[idx].copyWith(status: next);
+      });
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${order.title}" marked as ${next.label}.')),
         );
       }
     } catch (e) {

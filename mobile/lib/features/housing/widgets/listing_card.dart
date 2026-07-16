@@ -7,6 +7,8 @@ class ListingCard extends StatefulWidget {
   final VoidCallback? onView;
   final ValueChanged<bool>? onSaveToggle;
   final String? homeCurrency;
+  final bool isOwner;
+  final VoidCallback? onDelete;
 
   const ListingCard({
     super.key,
@@ -14,6 +16,8 @@ class ListingCard extends StatefulWidget {
     this.onView,
     this.onSaveToggle,
     this.homeCurrency,
+    this.isOwner = false,
+    this.onDelete,
   });
 
   @override
@@ -58,6 +62,27 @@ class _ListingCardState extends State<ListingCard> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete listing?'),
+        content: Text('"${widget.listing.title}" will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) widget.onDelete?.call();
   }
 
   Color _sourceColor(String source) {
@@ -166,13 +191,29 @@ class _ListingCardState extends State<ListingCard> {
                     ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: _handleSaveTap,
-                  child: Icon(
-                    _saved ? Icons.favorite : Icons.favorite_border,
-                    size: 18,
-                    color: _saved ? const Color(0xFFEC4899) : const Color(0xFF94A3B8),
-                  ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: _handleSaveTap,
+                      child: Icon(
+                        _saved ? Icons.favorite : Icons.favorite_border,
+                        size: 18,
+                        color: _saved ? const Color(0xFFEC4899) : const Color(0xFF94A3B8),
+                      ),
+                    ),
+                    if (widget.isOwner) ...[
+                      const SizedBox(height: 10),
+                      GestureDetector(
+                        onTap: _confirmDelete,
+                        child: const Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: Color(0xFFEF4444),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

@@ -56,6 +56,7 @@ extension OrderStatusExtension on OrderStatus {
 
 class GroupOrder {
   final String id;
+  final String organiserId;
   final String flagEmoji;
   final String title;
   final String storeName;
@@ -70,9 +71,12 @@ class GroupOrder {
   final String hostEmoji;
   final String hostName;
   final bool isJoined;
+  final String deliveryFee;
+  final int participantCount;
 
   const GroupOrder({
     required this.id,
+    this.organiserId = '',
     required this.flagEmoji,
     required this.title,
     required this.storeName,
@@ -87,12 +91,16 @@ class GroupOrder {
     required this.hostEmoji,
     required this.hostName,
     this.isJoined = false,
+    this.deliveryFee = 'S\$0.00',
+    this.participantCount = 0,
   });
 
   factory GroupOrder.fromJson(Map<String, dynamic> json) {
     final itemCost = double.tryParse((json['my_item_cost_sgd'] ?? 0).toString()) ?? 0;
     final shippingShare = double.tryParse((json['my_split_shipping_sgd'] ?? 0).toString()) ?? 0;
     final totalSgd = itemCost + shippingShare;
+    final totalShippingCost = double.tryParse((json['shipping_cost_sgd'] ?? 0).toString()) ?? 0;
+    final participantCount = int.tryParse((json['participant_count'] ?? 0).toString()) ?? 0;
 
     String formattedDeadline = '';
     if (json['deadline'] != null) {
@@ -102,6 +110,7 @@ class GroupOrder {
 
     return GroupOrder(
       id: json['id'].toString(),
+      organiserId: (json['organiser_id'] ?? '').toString(),
       flagEmoji: '🌍',
       title: json['order_name'] ?? '',
       storeName: json['store'] ?? '',
@@ -116,11 +125,14 @@ class GroupOrder {
       hostEmoji: '👤',
       hostName: json['host_name'] ?? '',
       isJoined: json['is_joined'] ?? false,
+      deliveryFee: 'S\$${totalShippingCost.toStringAsFixed(2)}',
+      participantCount: participantCount,
     );
   }
 
   GroupOrder copyWith({bool? isJoined, OrderStatus? status}) => GroupOrder(
         id: id,
+        organiserId: organiserId,
         flagEmoji: flagEmoji,
         title: title,
         storeName: storeName,
@@ -135,6 +147,8 @@ class GroupOrder {
         hostEmoji: hostEmoji,
         hostName: hostName,
         isJoined: isJoined ?? this.isJoined,
+        deliveryFee: deliveryFee,
+        participantCount: participantCount,
       );
 }
 

@@ -11,13 +11,38 @@ class OrderCard extends StatelessWidget {
   final GroupOrder order;
   final VoidCallback? onJoin;
   final VoidCallback? onLeave;
+  final bool isOwner;
+  final VoidCallback? onDelete;
 
   const OrderCard({
     super.key,
     required this.order,
     this.onJoin,
     this.onLeave,
+    this.isOwner = false,
+    this.onDelete,
   });
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete order?'),
+        content: Text('"${order.title}" will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) onDelete?.call();
+  }
 
   Future<void> _openJoinSheet(BuildContext context) async {
     final joined = await showModalBottomSheet<bool>(
@@ -139,6 +164,24 @@ class OrderCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (isOwner) ...[
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => _confirmDelete(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        size: 16,
+                        color: Color(0xFFEF4444),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
 
@@ -213,6 +256,8 @@ class OrderCard extends StatelessWidget {
                     _CostLine(label: order.itemsCost),
                     const SizedBox(height: 4),
                     _CostLine(label: order.shippingSplit),
+                    const SizedBox(height: 4),
+                    _CostLine(label: 'Delivery fee: ${order.deliveryFee}'),
                   ],
                 ),
               ],
@@ -279,6 +324,20 @@ class OrderCard extends StatelessWidget {
                         color: Color(0xFF64748B),
                       ),
                       overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.people_outline,
+                    size: 12,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${order.participantCount} joined',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF94A3B8),
                     ),
                   ),
                   const SizedBox(width: 8),

@@ -75,21 +75,28 @@ export async function leaveOrder(req: Request, res: Response): Promise<void> {
   }
 }
 
-export async function updateStatus(req: Request, res: Response): Promise<void> {
+export async function updateStatus(req: Request, res: Response) {
   try {
+    const userId = (req as any).user.id;
     const { status, tracking_number } = req.body;
-    if (!status) {
-      res.status(400).json({ error: 'status is required.' });
-      return;
-    }
-    const order = await OrderService.updateStatus(req.params.id as string, status, tracking_number);
-    res.json({ order });
+    const order = await OrderService.updateStatus(
+      req.params.id as string,
+      userId,
+      status,
+      tracking_number
+    );
+    res.json(order);
   } catch (err: any) {
-    console.error('[updateStatus]', err);
-    const httpStatus = err.message?.includes('Invalid status') ? 400
-                     : err.message?.includes('not found') ? 404
-                     : 500;
-    res.status(httpStatus).json({ error: err.message || 'Internal server error.' });
+    if (err.message === 'Order not found.') {
+      return res.status(404).json({ error: err.message });
+    }
+    if (err.message === 'Only the host can update order status.') {
+      return res.status(403).json({ error: err.message });
+    }
+    if (err.message?.startsWith('Invalid transition')) {
+      return res.status(400).json({ error: err.message });
+    }
+    res.status(500).json({ error: 'Failed to update status' });
   }
 }
 

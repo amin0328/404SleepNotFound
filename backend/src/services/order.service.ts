@@ -157,32 +157,32 @@ export async function leaveOrder(orderId: string, userId: string) {
   return { left: true, order_id: orderId };
 }
 
-export async function updateStatus(orderId: string, newStatus: string, trackingNumber?: string) {
+export async function updateStatus(orderId: string, userId: string, newStatus: string, tracking_number?: string) {
   const current = await pool.query(
-    'SELECT status FROM group_orders WHERE id = $1',
-    [orderId],
+    'SELECT status, organiser_id FROM group_orders WHERE id = $1',
+    [orderId]
   );
 
   if (current.rows.length === 0) throw new Error('Order not found.');
+  if (current.rows[0].organiser_id !== userId) throw new Error('Only the host can update order status.');
+
+  const validTransitions: Record<string, string> = {
+    'open': 'confirmed',
+    'confirmed': 'shipped',
+    'shipped': 'arrived'
+  };
 
   const currentStatus = current.rows[0].status;
-
-  if (!isValidTransition(currentStatus, newStatus)) {
-    throw new Error(
-      `Invalid status transition: ${currentStatus} → ${newStatus}. ` +
-      `Allowed: ${VALID_TRANSITIONS[currentStatus]?.join(', ') || 'none'}.`
-    );
+  if (validTransitions[currentStatus] !== newStatus) {
+    throw new Error(`Invalid transition: ${currentStatus} → ${newStatus}`);
   }
 
   const result = await pool.query(
     `UPDATE group_orders SET status = $1, tracking_number = $2
      WHERE id = $3 RETURNING *`,
-    [newStatus, trackingNumber ?? null, orderId],
+    [newStatus, tracking_number || null, orderId]
   );
-
-  const order = result.rows[0];
-  await sendGroupOrderStatusNotification(orderId, order.order_name, newStatus);
-  return order;
+  return result.rows[0];
 }
 
 export async function getCostSplit(orderId: string, userCurrency?: string) {

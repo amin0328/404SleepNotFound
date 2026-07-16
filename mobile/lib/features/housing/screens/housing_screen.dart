@@ -88,15 +88,15 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
   }
 
   Future<void> _handleViewListing(ListingModel listing) async {
-    final deleted = await Navigator.push<bool>(
+    await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => ListingDetailScreen(listingId: listing.id),
       ),
     );
-    if (deleted == true) {
-      _loadListings();
-    }
+    // Refresh in case the listing was deleted, or a review was added/removed
+    // while on the detail screen.
+    _loadListings();
   }
 
   void _handleCreateListing() {

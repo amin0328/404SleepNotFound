@@ -24,6 +24,8 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
   List<ListingModel> _listings = [];
   bool _isLoading = true;
   _SortOrder _sortOrder = _SortOrder.priceAsc;
+  int? _minPrice;
+  int? _maxPrice;
 
   final List<String> _regions = ['All', 'Central', 'Northern', 'Southern', 'Eastern', 'Western'];
 
@@ -38,6 +40,8 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
     try {
       final listings = await HousingService.getListings(
         location: _selectedRegion == 'All' ? null : _selectedRegion.toLowerCase(),
+        minPrice: _minPrice,
+        maxPrice: _maxPrice,
       );
       setState(() {
         _listings = listings;
@@ -113,6 +117,125 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
     _loadListings();
   }
 
+  Future<void> _handleDeleteListing(ListingModel listing) async {
+    try {
+      await HousingService.deleteListing(listing.id);
+      setState(() {
+        _listings.removeWhere((l) => l.id == listing.id);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${listing.title}" deleted.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleOpenPriceFilter() async {
+    final minController = TextEditingController(text: _minPrice?.toString() ?? '');
+    final maxController = TextEditingController(text: _maxPrice?.toString() ?? '');
+
+    final result = await showModalBottomSheet<Map<String, int?>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Price range (SGD / month)',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, fontFamily: 'Jost', color: Color(0xFF1E1B4B))),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: minController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Min',
+                        prefixText: 'S\$ ',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('–', style: TextStyle(color: Color(0xFF94A3B8))),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: maxController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Max',
+                        prefixText: 'S\$ ',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(sheetContext).pop({'min': null, 'max': null}),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('Clear'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(sheetContext).pop({
+                        'min': int.tryParse(minController.text),
+                        'max': int.tryParse(maxController.text),
+                      }),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7C3AED),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('Apply', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _minPrice = result['min'];
+        _maxPrice = result['max'];
+      });
+      _loadListings();
+    }
+  }
+
   List<ListingModel> get _filteredListings {
     final filtered = _listings.where((l) {
       final matchesSearch = _searchQuery.isEmpty ||
@@ -135,6 +258,10 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
     final userAsync = ref.watch(userProvider);
     final homeCurrency = userAsync.maybeWhen(
       data: (user) => user['home_currency'] as String?,
+      orElse: () => null,
+    );
+    final currentUserId = userAsync.maybeWhen(
+      data: (user) => user['id']?.toString(),
       orElse: () => null,
     );
 
@@ -221,14 +348,39 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            width: 44, height: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                          GestureDetector(
+                            onTap: _handleOpenPriceFilter,
+                            child: Container(
+                              width: 44, height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: (_minPrice != null || _maxPrice != null)
+                                      ? Colors.white
+                                      : Colors.white.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  const Icon(Icons.tune, size: 15, color: Colors.white),
+                                  if (_minPrice != null || _maxPrice != null)
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFC084FC),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
-                            child: const Icon(Icons.tune, size: 15, color: Colors.white),
                           ),
                           const SizedBox(width: 8),
                           GestureDetector(
@@ -332,6 +484,8 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
                                             onView: () => _handleViewListing(listing),
                                             onSaveToggle: (save) => _handleSaveToggle(listing, save),
                                             homeCurrency: homeCurrency,
+                                            isOwner: currentUserId != null && listing.postedBy == currentUserId,
+                                            onDelete: () => _handleDeleteListing(listing),
                                           );
                                         },
                                       ),

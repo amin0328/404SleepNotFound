@@ -5,13 +5,36 @@ class BuddyCard extends StatelessWidget {
   final BuddyPost post;
   final VoidCallback? onMessage;
   final VoidCallback? onToggleFavorite;
+  final VoidCallback? onDelete;
 
   const BuddyCard({
     super.key,
     required this.post,
     this.onMessage,
     this.onToggleFavorite,
+    this.onDelete,
   });
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete post?'),
+        content: const Text('This post will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) onDelete?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,19 +144,32 @@ class BuddyCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: onToggleFavorite,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Icon(
-                      post.isFavorited ? Icons.favorite : Icons.favorite_border,
-                      size: 20,
-                      color: post.isFavorited
-                          ? const Color(0xFF818CF8)
-                          : const Color(0xFFCBD5E1),
+                if (post.isMine)
+                  GestureDetector(
+                    onTap: () => _confirmDelete(context),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2, left: 8),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        size: 20,
+                        color: Color(0xFFEF4444),
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: onToggleFavorite,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Icon(
+                        post.isFavorited ? Icons.favorite : Icons.favorite_border,
+                        size: 20,
+                        color: post.isFavorited
+                            ? const Color(0xFF818CF8)
+                            : const Color(0xFFCBD5E1),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
 

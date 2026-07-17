@@ -114,7 +114,7 @@ export async function updateStatus(req: Request, res: Response) {
     if (err.message?.startsWith('Invalid transition')) {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to update status' });
+    res.status(500).json({ error: err.message || 'Failed to update status' });
   }
 }
 

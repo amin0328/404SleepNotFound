@@ -1,6 +1,10 @@
 import pool from '../config/db';
 import { sendGroupOrderStatusNotification } from './notification.service';
-import { getOrCreateGroupConversation, addGroupConversationMember } from './chat.service';
+import {
+  getOrCreateGroupConversation,
+  addGroupConversationMember,
+  saveMessage,
+} from './chat.service';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   open:      ['confirmed'],
@@ -47,7 +51,7 @@ export async function getOrders(userId: string, status?: string, search?: string
        u.name        AS host_name,
        u.avatar_url  AS host_avatar,
        COUNT(DISTINCT op.user_id)::int AS participant_count,
-       CASE WHEN om.user_id IS NOT NULL THEN true ELSE false END AS is_joined,
+       CASE WHEN om.user_id IS NOT NULL OR o.organiser_id = $1 THEN true ELSE false END AS is_joined,
        om.item_cost_sgd      AS my_item_cost_sgd,
        om.split_shipping_sgd AS my_split_shipping_sgd
      FROM group_orders o
@@ -68,7 +72,7 @@ export async function getOrderById(orderId: string, userId: string) {
     `SELECT
        o.*,
        u.name AS host_name,
-       CASE WHEN om.user_id IS NOT NULL THEN true ELSE false END AS is_joined,
+       CASE WHEN om.user_id IS NOT NULL OR o.organiser_id = $2 THEN true ELSE false END AS is_joined,
        om.item_cost_sgd      AS my_item_cost_sgd,
        om.split_shipping_sgd AS my_split_shipping_sgd
      FROM group_orders o
@@ -141,6 +145,10 @@ export async function joinOrder(
 
   const groupConversationId = await getOrCreateGroupConversation(orderId);
   await addGroupConversationMember(groupConversationId, userId);
+
+  const userResult = await pool.query('SELECT name FROM users WHERE id = $1', [userId]);
+  const userName = userResult.rows[0]?.name ?? 'Someone';
+  await saveMessage(userId, `${userName} joined the chat!`, undefined, groupConversationId);
 
   await recalculateSplitShipping(orderId);
 

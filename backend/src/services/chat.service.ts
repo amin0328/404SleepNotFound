@@ -24,14 +24,50 @@ export async function getOrCreateGroupConversation(orderId: string): Promise<str
     [orderId],
   );
 
-  if (existing.rows.length > 0) return existing.rows[0].id;
+  if (existing.rows.length > 0) {
+    const conversationId = existing.rows[0].id;
+    await pool.query(
+      `INSERT INTO group_conversation_members (conversation_id, user_id)
+       SELECT $1, user_id FROM order_participants WHERE order_id = $2
+       ON CONFLICT DO NOTHING`,
+      [conversationId, orderId],
+    );
+
+    const orderResult = await pool.query(
+      'SELECT organiser_id FROM group_orders WHERE id = $1',
+      [orderId],
+    );
+
+    if (orderResult.rows.length > 0) {
+      await addGroupConversationMember(conversationId, orderResult.rows[0].organiser_id);
+    }
+
+    return conversationId;
+  }
 
   const result = await pool.query(
     'INSERT INTO group_conversations (order_id) VALUES ($1) RETURNING id',
     [orderId],
   );
 
-  return result.rows[0].id;
+  const conversationId = result.rows[0].id;
+  const orderResult = await pool.query(
+    'SELECT organiser_id FROM group_orders WHERE id = $1',
+    [orderId],
+  );
+
+  if (orderResult.rows.length > 0) {
+    const organiserId = orderResult.rows[0].organiser_id;
+    await addGroupConversationMember(conversationId, organiserId);
+    await pool.query(
+      `INSERT INTO group_conversation_members (conversation_id, user_id)
+       SELECT $1, user_id FROM order_participants WHERE order_id = $2
+       ON CONFLICT DO NOTHING`,
+      [conversationId, orderId],
+    );
+  }
+
+  return conversationId;
 }
 
 export async function addGroupConversationMember(conversationId: string, userId: string): Promise<void> {

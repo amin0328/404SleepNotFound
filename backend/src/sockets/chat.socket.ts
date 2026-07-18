@@ -16,11 +16,19 @@ interface AuthenticatedSocket extends Socket {
 }
 
 const onlineUsers = new Map<string, string>();
+let ioInstance: SocketServer | null = null;
+
+export function getIo(): SocketServer {
+  if (!ioInstance) throw new Error('Socket.io not initialized.');
+  return ioInstance;
+}
 
 export function initChatSocket(httpServer: HttpServer): void {
   const io = new SocketServer(httpServer, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
   });
+
+  ioInstance = io;
 
   io.use((socket: AuthenticatedSocket, next) => {
     const token =
@@ -89,12 +97,10 @@ export function initChatSocket(httpServer: HttpServer): void {
         if (convResult.rows.length > 0) {
           const { user_a, user_b } = convResult.rows[0];
           const recipientId = user_a === userId ? user_b : user_a;
-          const isRecipientOnline = onlineUsers.has(recipientId);
 
-          if (!isRecipientOnline) {
+          if (!onlineUsers.has(recipientId)) {
             const senderResult = await pool.query(
-              'SELECT name FROM users WHERE id = $1',
-              [userId],
+              'SELECT name FROM users WHERE id = $1', [userId]
             );
             const senderName = senderResult.rows[0]?.name ?? 'Someone';
             await sendChatNotification(userId, recipientId, senderName, body.trim(), conversation_id, false);
@@ -131,23 +137,15 @@ export function initChatSocket(httpServer: HttpServer): void {
         );
 
         const senderResult = await pool.query(
-          'SELECT name FROM users WHERE id = $1',
-          [userId],
+          'SELECT name FROM users WHERE id = $1', [userId]
         );
         const senderName = senderResult.rows[0]?.name ?? 'Someone';
 
         for (const row of membersResult.rows) {
-          const recipientId = row.user_id;
-          const isRecipientOnline = onlineUsers.has(recipientId);
-
-          if (!isRecipientOnline) {
+          if (!onlineUsers.has(row.user_id)) {
             await sendChatNotification(
-              userId,
-              recipientId,
-              senderName,
-              body.trim(),
-              group_conversation_id,
-              true,
+              userId, row.user_id, senderName,
+              body.trim(), group_conversation_id, true,
             );
           }
         }
@@ -161,5 +159,16 @@ export function initChatSocket(httpServer: HttpServer): void {
       onlineUsers.delete(userId);
       console.log(`[socket] User disconnected: ${userId}`);
     });
+  });
+}
+
+export async function emitGroupMessage(
+  groupConversationId: string,
+  message: Record<string, unknown>,
+): Promise<void> {
+  if (!ioInstance) return;
+  ioInstance.to(`group:${groupConversationId}`).emit('message:new', {
+    ...message,
+    conversation_type: 'group',
   });
 }

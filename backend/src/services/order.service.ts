@@ -5,6 +5,7 @@ import {
   addGroupConversationMember,
   saveMessage,
 } from './chat.service';
+import { emitGroupMessage } from '../sockets/chat.socket';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   open:      ['confirmed'],
@@ -148,7 +149,8 @@ export async function joinOrder(
 
   const userResult = await pool.query('SELECT name FROM users WHERE id = $1', [userId]);
   const userName = userResult.rows[0]?.name ?? 'Someone';
-  await saveMessage(userId, `${userName} joined the chat!`, undefined, groupConversationId);
+  const message = await saveMessage(userId, `${userName} joined the chat!`, undefined, groupConversationId);
+  await emitGroupMessage(groupConversationId, message);
 
   await recalculateSplitShipping(orderId);
 

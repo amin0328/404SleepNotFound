@@ -11,7 +11,7 @@ export function getUrgency(dueDate: string): 'green' | 'amber' | 'red' {
 
 export async function getDeadlinesByUser(userId: string) {
   const result = await pool.query(
-    'SELECT * FROM deadlines WHERE user_id = $1 ORDER BY due_date ASC',
+    'SELECT * FROM deadlines WHERE user_id = $1 OR user_id IS NULL ORDER BY due_date ASC',
     [userId]
   );
   return result.rows.map((d: any) => ({ ...d, urgency: getUrgency(d.due_date) }));
@@ -19,12 +19,12 @@ export async function getDeadlinesByUser(userId: string) {
 
 export async function createDeadline(userId: string, data: {
   title: string; category: string; due_date: string;
-  reminder_days: number[]; notifications_on: boolean; notes?: string;
+  reminder_days: number[]; notifications_on: boolean; notes?: string; source?: string;
 }) {
   const result = await pool.query(
-    `INSERT INTO deadlines (user_id, title, category, due_date, reminder_days, notifications_on, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    [userId, data.title, data.category, data.due_date,
+    `INSERT INTO deadlines (user_id, source, title, category, due_date, reminder_days, notifications_on, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    [userId, data.source ?? 'personal', data.title, data.category, data.due_date,
      data.reminder_days, data.notifications_on, data.notes]
   );
   return { ...result.rows[0], urgency: getUrgency(data.due_date) };

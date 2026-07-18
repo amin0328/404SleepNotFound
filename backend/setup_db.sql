@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS deadlines (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  source VARCHAR(50) NOT NULL DEFAULT 'personal',
   title VARCHAR(200) NOT NULL,
   category VARCHAR(50),
   due_date DATE NOT NULL,

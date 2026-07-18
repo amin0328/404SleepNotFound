@@ -22,10 +22,10 @@ export async function getDeadlines(req: Request, res: Response): Promise<void> {
     const userId = (req as AuthRequest).userId!;
 
     const result = await pool.query(
-      `SELECT id, title, category, due_date, reminder_days,
+      `SELECT id, title, category, source, due_date, reminder_days,
               notifications_on, notes, created_at
        FROM deadlines
-       WHERE user_id = $1
+       WHERE user_id = $1 OR user_id IS NULL
        ORDER BY due_date ASC`,
       [userId],
     );
@@ -55,12 +55,13 @@ export async function createDeadline(req: Request, res: Response): Promise<void>
 
     const result = await pool.query(
       `INSERT INTO deadlines
-         (user_id, title, category, due_date, reminder_days, notifications_on, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, title, category, due_date, reminder_days,
+         (user_id, source, title, category, due_date, reminder_days, notifications_on, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, title, category, source, due_date, reminder_days,
                  notifications_on, notes, created_at`,
       [
         userId,
+        'personal',
         title.trim(),
         category ?? null,
         due_date,
@@ -126,7 +127,7 @@ export async function updateDeadline(req: Request, res: Response): Promise<void>
       `UPDATE deadlines
        SET ${updates.join(', ')}
        WHERE id = $${idx} AND user_id = $${idx + 1}
-       RETURNING id, title, category, due_date, reminder_days,
+       RETURNING id, title, category, source, due_date, reminder_days,
                  notifications_on, notes, created_at`,
       values,
     );
@@ -206,7 +207,8 @@ export async function importNusDeadline(req: Request, res: Response) {
       due_date: event.event_date,
       reminder_days: [7, 3, 1],
       notifications_on: true,
-      notes: event.notes
+      notes: event.notes,
+      source: 'nus',
     });
     res.status(201).json(deadline);
   } catch (err) {

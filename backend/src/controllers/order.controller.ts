@@ -103,7 +103,7 @@ export async function updateStatus(req: Request, res: Response) {
       status,
       tracking_number
     );
-    res.json(order);
+    res.json({ order });
   } catch (err: any) {
     if (err.message === 'Order not found.') {
       return res.status(404).json({ error: err.message });

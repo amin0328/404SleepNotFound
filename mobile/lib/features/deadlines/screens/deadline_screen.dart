@@ -42,7 +42,12 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
       _deadlines.where((d) => isSameDay(d.dueDate, day)).toList();
 
   List<DeadlineModel> get _visibleDeadlines {
-    if (_selectedDay == null) return [..._deadlines]..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    if (_selectedDay == null) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      return _deadlines.where((d) => !d.dueDate.isBefore(today)).toList()
+        ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    }
     return _getDeadlinesForDay(_selectedDay!);
   }
 

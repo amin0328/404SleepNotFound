@@ -52,13 +52,32 @@ class MessageBubble extends StatelessWidget {
                     ),
                     border: isMine ? null : Border.all(color: const Color(0xFFF1F5F9)),
                   ),
-                  child: Text(
-                    message.body,
-                    style: TextStyle(
-                      color: isMine ? Colors.white : const Color(0xFF1E293B),
-                      fontSize: 14.5,
-                      height: 1.35,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (message.imageUrl != null) ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          message.imageUrl!,
+                          width: 220,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const SizedBox(
+                            width: 220, height: 100,
+                            child: Center(child: Icon(Icons.broken_image_outlined)),
+                          ),
+                        ),
+                      ),
+                      if (message.imageUrl != null && message.body.isNotEmpty) const SizedBox(height: 8),
+                      if (message.body.isNotEmpty) Text(
+                        message.body,
+                        style: TextStyle(
+                          color: isMine ? Colors.white : const Color(0xFF1E293B),
+                          fontSize: 14.5,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

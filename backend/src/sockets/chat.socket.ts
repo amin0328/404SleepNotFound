@@ -71,9 +71,9 @@ export function initChatSocket(httpServer: HttpServer): void {
       });
     });
 
-    socket.on('message:direct', async (data: { conversation_id: string; body: string }) => {
-      const { conversation_id, body } = data;
-      if (!body?.trim()) return;
+    socket.on('message:direct', async (data: { conversation_id: string; body?: string; image_url?: string }) => {
+      const { conversation_id, body = '', image_url } = data;
+      if (!body.trim() && !image_url) return;
 
       const isMember = await isConversationMember(userId, conversation_id);
       if (!isMember) {
@@ -82,7 +82,7 @@ export function initChatSocket(httpServer: HttpServer): void {
       }
 
       try {
-        const message = await saveMessage(userId, body.trim(), conversation_id, undefined);
+        const message = await saveMessage(userId, body.trim(), conversation_id, undefined, image_url);
 
         io.to(`direct:${conversation_id}`).emit('message:new', {
           ...message,
@@ -103,7 +103,7 @@ export function initChatSocket(httpServer: HttpServer): void {
               'SELECT name FROM users WHERE id = $1', [userId]
             );
             const senderName = senderResult.rows[0]?.name ?? 'Someone';
-            await sendChatNotification(userId, recipientId, senderName, body.trim(), conversation_id, false);
+            await sendChatNotification(userId, recipientId, senderName, body.trim() || 'Sent a photo', conversation_id, false);
           }
         }
       } catch (err) {
@@ -112,9 +112,9 @@ export function initChatSocket(httpServer: HttpServer): void {
       }
     });
 
-    socket.on('message:group', async (data: { group_conversation_id: string; body: string }) => {
-      const { group_conversation_id, body } = data;
-      if (!body?.trim()) return;
+    socket.on('message:group', async (data: { group_conversation_id: string; body?: string; image_url?: string }) => {
+      const { group_conversation_id, body = '', image_url } = data;
+      if (!body.trim() && !image_url) return;
 
       const isMember = await isGroupConversationMember(userId, group_conversation_id);
       if (!isMember) {
@@ -123,7 +123,7 @@ export function initChatSocket(httpServer: HttpServer): void {
       }
 
       try {
-        const message = await saveMessage(userId, body.trim(), undefined, group_conversation_id);
+        const message = await saveMessage(userId, body.trim(), undefined, group_conversation_id, image_url);
 
         io.to(`group:${group_conversation_id}`).emit('message:new', {
           ...message,
@@ -145,7 +145,7 @@ export function initChatSocket(httpServer: HttpServer): void {
           if (!onlineUsers.has(row.user_id)) {
             await sendChatNotification(
               userId, row.user_id, senderName,
-              body.trim(), group_conversation_id, true,
+              body.trim() || 'Sent a photo', group_conversation_id, true,
             );
           }
         }

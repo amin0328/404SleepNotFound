@@ -83,12 +83,13 @@ export async function saveMessage(
   body: string,
   conversationId?: string,
   groupConversationId?: string,
+  imageUrl?: string,
 ): Promise<Record<string, unknown>> {
   const result = await pool.query(
-    `INSERT INTO messages (sender_id, body, conversation_id, group_conversation_id)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, sender_id, body, conversation_id, group_conversation_id, created_at`,
-    [senderId, body, conversationId ?? null, groupConversationId ?? null],
+    `INSERT INTO messages (sender_id, body, conversation_id, group_conversation_id, image_url)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, sender_id, body, conversation_id, group_conversation_id, image_url, created_at`,
+    [senderId, body, conversationId ?? null, groupConversationId ?? null, imageUrl ?? null],
   );
 
   const message = result.rows[0];
@@ -119,7 +120,7 @@ export async function getMessages(
   }
 
   const result = await pool.query(
-    `SELECT m.id, m.body, m.created_at,
+    `SELECT m.id, m.body, m.image_url, m.created_at,
             m.sender_id, u.name AS sender_name, u.avatar_url AS sender_avatar
      FROM messages m
      JOIN users u ON u.id = m.sender_id
@@ -147,7 +148,7 @@ export async function getGroupMessages(
   }
 
   const result = await pool.query(
-    `SELECT m.id, m.body, m.created_at,
+    `SELECT m.id, m.body, m.image_url, m.created_at,
             m.sender_id, u.name AS sender_name, u.avatar_url AS sender_avatar
      FROM messages m
      JOIN users u ON u.id = m.sender_id

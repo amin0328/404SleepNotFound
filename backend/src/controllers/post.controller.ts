@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
 import { AuthRequest } from '../middleware/auth';
-import { calculateMatchScore } from '../services/matching.service';
+import { calculateMatchScore, calculateRecommendationScore, countSharedInterests } from '../services/matching.service';
 import * as PostService from '../services/post.service';
 
 export async function getPosts(req: Request, res: Response): Promise<void> {
@@ -14,6 +14,16 @@ export async function getPosts(req: Request, res: Response): Promise<void> {
       [userId],
     );
     const me = meResult.rows[0];
+    const interestTagsResult = await pool.query(
+      `SELECT COALESCE(array_agg(DISTINCT tag), ARRAY[]::text[]) AS tags
+       FROM (
+         SELECT unnest(p.tags) AS tag FROM posts p WHERE p.author_id = $1
+         UNION ALL
+         SELECT unnest(p.tags) AS tag FROM post_interests pi JOIN posts p ON p.id = pi.post_id WHERE pi.user_id = $1
+       ) t`,
+      [userId],
+    );
+    const myInterestTags: string[] = interestTagsResult.rows[0]?.tags ?? [];
 
     const values: unknown[] = [userId];
     const conditions: string[] = [];   // ← self-exclusion 제거: 본인 글도 포함
@@ -43,25 +53,47 @@ export async function getPosts(req: Request, res: Response): Promise<void> {
          u.home_country,
          u.lifestyle,
          CASE WHEN pf.user_id IS NOT NULL THEN true ELSE false END AS is_favorited,
+         CASE WHEN my_view.viewer_id IS NOT NULL THEN true ELSE false END AS viewed_by_me,
+         EXISTS (
+           SELECT 1 FROM post_views pv
+           JOIN posts my_post ON my_post.id = pv.post_id
+           WHERE my_post.author_id = $1 AND pv.viewer_id = p.author_id
+         ) AS viewed_me,
          (p.author_id = $1) AS is_mine
        FROM posts p
        JOIN users u ON u.id = p.author_id
        LEFT JOIN post_favorites pf ON pf.post_id = p.id AND pf.user_id = $1
+       LEFT JOIN post_views my_view ON my_view.post_id = p.id AND my_view.viewer_id = $1
        ${where}
        ORDER BY p.created_at DESC`,
       values,
     );
 
-    const posts = result.rows.map((post) => ({
-      ...post,
-      match_percentage: calculateMatchScore(me, {
+    // A feed load is an intentional view signal. The unique row preserves its first-view timestamp.
+    const visiblePostIds = result.rows.filter((post) => post.author_id !== userId).map((post) => post.id);
+    if (visiblePostIds.length) {
+      await pool.query(
+        'INSERT INTO post_views (post_id, viewer_id) SELECT unnest($1::uuid[]), $2 ON CONFLICT DO NOTHING',
+        [visiblePostIds, userId],
+      );
+    }
+    const posts = result.rows.map((post) => {
+      const compatibility = calculateMatchScore(me, {
         lifestyle: post.lifestyle,
         home_country: post.home_country,
         major: post.major,
-      }),
-    }));
+      });
+      const recommendation = calculateRecommendationScore({
+        compatibility,
+        sharedInterests: countSharedInterests(myInterestTags, post.tags ?? []),
+        viewedByMe: post.viewed_by_me,
+        viewedMe: post.viewed_me,
+        createdAt: post.created_at,
+      });
+      return { ...post, match_percentage: compatibility, recommendation_score: recommendation.score, recommendation_reasons: recommendation.reasons };
+    });
 
-    posts.sort((a, b) => b.match_percentage - a.match_percentage);
+    posts.sort((a, b) => b.recommendation_score - a.recommendation_score || b.match_percentage - a.match_percentage);
     res.json({ posts, total: posts.length });
   } catch (err) {
     console.error('[getPosts]', err);

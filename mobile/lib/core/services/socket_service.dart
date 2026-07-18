@@ -86,19 +86,21 @@ class SocketService {
     _socket?.emit('join:group', groupConversationId);
   }
 
-  void sendDirectMessage(String conversationId, String body) {
-    if (body.trim().isEmpty) return;
+  void sendDirectMessage(String conversationId, String body, {String? imageUrl}) {
+    if (body.trim().isEmpty && imageUrl == null) return;
     _socket?.emit('message:direct', {
       'conversation_id': conversationId,
       'body': body.trim(),
+      if (imageUrl != null) 'image_url': imageUrl,
     });
   }
 
-  void sendGroupMessage(String groupConversationId, String body) {
-    if (body.trim().isEmpty) return;
+  void sendGroupMessage(String groupConversationId, String body, {String? imageUrl}) {
+    if (body.trim().isEmpty && imageUrl == null) return;
     _socket?.emit('message:group', {
       'group_conversation_id': groupConversationId,
       'body': body.trim(),
+      if (imageUrl != null) 'image_url': imageUrl,
     });
   }
 

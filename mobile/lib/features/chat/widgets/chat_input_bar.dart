@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatInputBar extends StatefulWidget {
   final ValueChanged<String> onSend;
+  final Future<void> Function(XFile image, String caption) onImageSelected;
 
-  const ChatInputBar({super.key, required this.onSend});
+  const ChatInputBar({super.key, required this.onSend, required this.onImageSelected});
 
   @override
   State<ChatInputBar> createState() => _ChatInputBarState();
@@ -17,6 +19,14 @@ class _ChatInputBarState extends State<ChatInputBar> {
     if (text.isEmpty) return;
     widget.onSend(text);
     _controller.clear();
+  }
+
+  Future<void> _pickImage() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 82, maxWidth: 1600);
+    if (image == null || !mounted) return;
+    final caption = _controller.text.trim();
+    _controller.clear();
+    await widget.onImageSelected(image, caption);
   }
 
   @override
@@ -40,6 +50,11 @@ class _ChatInputBarState extends State<ChatInputBar> {
       ),
       child: Row(
         children: [
+          IconButton(
+            tooltip: 'Send photo',
+            icon: const Icon(Icons.photo_outlined, color: Color(0xFF7C3AED)),
+            onPressed: _pickImage,
+          ),
           Expanded(
             child: TextField(
               controller: _controller,

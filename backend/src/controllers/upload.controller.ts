@@ -48,3 +48,5 @@ export async function uploadListingImage(req: Request, res: Response): Promise<v
     res.status(500).json({ error: 'Internal server error.' });
   }
 }
+
+export const uploadChatImage = uploadListingImage;

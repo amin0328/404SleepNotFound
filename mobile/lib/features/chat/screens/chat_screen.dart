@@ -8,6 +8,7 @@ import 'package:mobile/core/services/socket_service.dart';
 import 'package:mobile/features/chat/services/chat_service.dart';
 import 'package:mobile/features/chat/widgets/chat_input_bar.dart';
 import 'package:mobile/features/chat/widgets/message_bubble.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile/shared/widgets/avatar_circle.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -130,6 +131,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  Future<void> _handleImageSelected(XFile image, String caption) async {
+    try {
+      final imageUrl = await ChatService.uploadImage(image);
+      if (_isGroup) {
+        SocketService.instance.sendGroupMessage(widget.conversation.id, caption, imageUrl: imageUrl);
+      } else {
+        SocketService.instance.sendDirectMessage(widget.conversation.id, caption, imageUrl: imageUrl);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _messageSub?.cancel();
@@ -173,7 +189,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       body: Column(
         children: [
           Expanded(child: _buildBody(currentUserId)),
-          ChatInputBar(onSend: _handleSend),
+          ChatInputBar(onSend: _handleSend, onImageSelected: _handleImageSelected),
         ],
       ),
     );

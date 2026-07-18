@@ -2,8 +2,20 @@ import 'package:dio/dio.dart';
 import 'package:mobile/core/api/api_client.dart';
 import 'package:mobile/core/models/conversation.dart';
 import 'package:mobile/core/models/chat_message.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatService {
+  static Future<String> uploadImage(XFile imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final response = await ApiClient.dio.post('/chat/upload-image', data: FormData.fromMap({
+        'image': MultipartFile.fromBytes(bytes, filename: imageFile.name),
+      }));
+      return response.data['image_url'] as String;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['error'] ?? 'Failed to upload photo.');
+    }
+  }
   static Future<List<Conversation>> getConversations() async {
     try {
       final res = await ApiClient.dio.get('/chat');

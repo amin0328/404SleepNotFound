@@ -6,6 +6,7 @@ class ChatMessage {
 
   final String? senderName;
   final String? senderAvatar;
+  final String? imageUrl;
 
   const ChatMessage({
     required this.id,
@@ -14,6 +15,7 @@ class ChatMessage {
     required this.senderId,
     this.senderName,
     this.senderAvatar,
+    this.imageUrl,
   });
 
   bool isMine(String currentUserId) => senderId == currentUserId;
@@ -25,6 +27,7 @@ class ChatMessage {
         senderId: json['sender_id'].toString(),
         senderName: json['sender_name'] as String?,
         senderAvatar: json['sender_avatar'] as String?,
+        imageUrl: json['image_url'] as String?,
       );
 
   ChatMessage copyWithSender({String? senderName, String? senderAvatar}) => ChatMessage(
@@ -34,5 +37,6 @@ class ChatMessage {
         senderId: senderId,
         senderName: senderName ?? this.senderName,
         senderAvatar: senderAvatar ?? this.senderAvatar,
+        imageUrl: imageUrl,
       );
 }

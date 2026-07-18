@@ -183,6 +183,24 @@ class BuddyCard extends StatelessWidget {
               ),
             ),
 
+            if (!post.isMine && post.recommendationReasons.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.auto_awesome_outlined, size: 14, color: Color(0xFF7C3AED)),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      post.recommendationReasons.join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF7C3AED)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
             const SizedBox(height: 12),
             Wrap(
               spacing: 6,

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/listing_model.dart';
 import '../services/housing_service.dart';
 import '../widgets/listing_card.dart';
 import '../widgets/create_listing_sheet.dart';
+import '../widgets/housing_resources_section.dart';
 import 'listing_detail_screen.dart';
 import 'saved_listings_screen.dart';
 import 'package:mobile/core/providers/user_provider.dart';
@@ -64,6 +66,50 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
           : _SortOrder.priceAsc;
     });
   }
+
+  Future<void> _openResource(HousingResourceItem resource) async {
+    final opened = await launchUrl(Uri.parse(resource.url), mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open this resource.')),
+      );
+    }
+  }
+
+  List<HousingResourceItem> get _housingResources => const [
+        HousingResourceItem(
+          label: 'HDB rental guide',
+          description: 'Eligibility and options for renting HDB or open-market flats.',
+          url: 'https://www.hdb.gov.sg/renting-a-flat',
+          icon: Icons.account_balance_outlined,
+          isOfficial: true,
+        ),
+        HousingResourceItem(
+          label: 'URA rental rules',
+          description: 'Minimum stay duration and occupancy limits for private homes.',
+          url: 'https://www.ura.gov.sg/guidelines/property-and-business-owners/property/renting-property/',
+          icon: Icons.gavel_outlined,
+          isOfficial: true,
+        ),
+        HousingResourceItem(
+          label: 'PropertyGuru rentals',
+          description: 'Search current rooms, HDBs, condos, and landed rentals.',
+          url: 'https://www.propertyguru.com.sg/property-for-rent',
+          icon: Icons.home_work_outlined,
+        ),
+        HousingResourceItem(
+          label: '99.co rentals',
+          description: 'Browse current Singapore rental listings by area and property type.',
+          url: 'https://www.99.co/',
+          icon: Icons.search_outlined,
+        ),
+        HousingResourceItem(
+          label: 'SRX rentals',
+          description: 'Compare current room and whole-unit rental listings.',
+          url: 'https://www.srx.com.sg/singapore-property-listings/property-for-rent',
+          icon: Icons.map_outlined,
+        ),
+      ];
 
   Future<void> _handleSaveToggle(ListingModel listing, bool save) async {
     try {
@@ -467,18 +513,29 @@ class _HousingScreenState extends ConsumerState<HousingScreen> {
                                 ? const Center(
                                     child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
                                   )
-                                : _filteredListings.isEmpty
-                                    ? const Center(
-                                        child: Text(
-                                          'No listings found',
-                                          style: TextStyle(color: Color(0xFF94A3B8), fontFamily: 'Jost'),
-                                        ),
-                                      )
-                                    : ListView.builder(
+                                : ListView.builder(
                                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
-                                        itemCount: _filteredListings.length,
+                                        itemCount: _filteredListings.isEmpty ? 2 : _filteredListings.length + 1,
                                         itemBuilder: (_, i) {
-                                          final listing = _filteredListings[i];
+                                          if (i == 0) {
+                                            return HousingResourcesSection(
+                                              region: _selectedRegion,
+                                              resources: _housingResources,
+                                              onOpen: _openResource,
+                                            );
+                                          }
+                                          if (_filteredListings.isEmpty) {
+                                            return const Padding(
+                                              padding: EdgeInsets.only(top: 28),
+                                              child: Center(
+                                                child: Text(
+                                                  'No student listings found for these filters.',
+                                                  style: TextStyle(color: Color(0xFF94A3B8), fontFamily: 'Jost'),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          final listing = _filteredListings[i - 1];
                                           return ListingCard(
                                             listing: listing,
                                             onView: () => _handleViewListing(listing),

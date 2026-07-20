@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'nus_calendar_event.dart';
+
 enum DeadlineCategory { visa, lease, course, other }
 
 enum UrgencyLevel { urgent, warning, normal }
@@ -10,6 +12,7 @@ class DeadlineModel {
   final String? description;
   final DateTime dueDate;
   final DeadlineCategory category;
+  final String source;
 
   DeadlineModel({
     required this.id,
@@ -17,7 +20,19 @@ class DeadlineModel {
     this.description,
     required this.dueDate,
     required this.category,
+    this.source = 'personal',
   });
+
+  bool get isNusDeadline => source == 'nus';
+
+  factory DeadlineModel.fromNusEvent(NusCalendarEvent event) => DeadlineModel(
+        id: 'nus-${event.id}',
+        title: event.title,
+        description: event.notes,
+        dueDate: event.eventDate,
+        category: DeadlineCategory.other,
+        source: 'nus',
+      );
 
   UrgencyLevel get urgency {
     final days = dueDate.difference(DateTime.now()).inDays;
@@ -43,6 +58,7 @@ class DeadlineModel {
       (e) => e.name == json['category'],
       orElse: () => DeadlineCategory.other,
     ),
+    source: json['source'] ?? 'personal',
   );
 
   Map<String, dynamic> toJson() => {

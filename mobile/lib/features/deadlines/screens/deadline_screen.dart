@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/deadline_model.dart';
+import '../models/nus_calendar_event.dart';
 import '../services/deadline_service.dart';
 import '../widgets/deadline_card.dart';
 import '../widgets/deadline_modal.dart';
@@ -26,12 +27,35 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
 
   Future<void> _loadDeadlines() async {
     try {
-      final deadlines = await DeadlineService.getDeadlines();
+      final results = await Future.wait([
+        DeadlineService.getDeadlines(),
+        DeadlineService.getNusCalendar(),
+      ]);
       if (!mounted) return;
+
+      final personal = results[0] as List<DeadlineModel>;
+      final nusEvents = results[1] as List<NusCalendarEvent>;
+      final nusAsDeadlines = nusEvents.map(DeadlineModel.fromNusEvent).toList();
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      final expiredPersonal = personal.where((d) => d.dueDate.isBefore(today)).toList();
+      final activePersonal = personal.where((d) => !d.dueDate.isBefore(today)).toList();
+      final activeNus = nusAsDeadlines.where((d) => !d.dueDate.isBefore(today)).toList();
+
       setState(() {
-        _deadlines = deadlines;
+        _deadlines = [...activePersonal, ...activeNus];
         _isLoading = false;
       });
+
+      // Best-effort cleanup: delete expired personal deadlines in the
+      // background so they don't come back on next load. NUS calendar
+      // events aren't owned by the user, so they're just filtered out of
+      // the view, not deleted.
+      for (final d in expiredPersonal) {
+        DeadlineService.deleteDeadline(d.id).catchError((_) {});
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -43,12 +67,30 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
 
   List<DeadlineModel> get _visibleDeadlines {
     if (_selectedDay == null) {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      return _deadlines.where((d) => !d.dueDate.isBefore(today)).toList()
-        ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+      return [..._deadlines]..sort((a, b) => a.dueDate.compareTo(b.dueDate));
     }
     return _getDeadlinesForDay(_selectedDay!);
+  }
+
+  void _showNusDeadlineInfo(DeadlineModel d) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(d.title, style: const TextStyle(fontFamily: 'Jost')),
+        content: Text(
+          d.description?.isNotEmpty == true
+              ? d.description!
+              : 'A university-wide NUS date. This can\'t be edited or removed.',
+          style: const TextStyle(fontFamily: 'Jost'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _openModal({DeadlineModel? existing}) {
@@ -297,7 +339,9 @@ class _DeadlineScreenState extends State<DeadlineScreen> {
                             else
                               ...(_visibleDeadlines.map((d) => DeadlineCard(
                                     deadline: d,
-                                    onTap: () => _openModal(existing: d),
+                                    onTap: () => d.isNusDeadline
+                                        ? _showNusDeadlineInfo(d)
+                                        : _openModal(existing: d),
                                   ))),
                             const SizedBox(height: 12),
                             Padding(

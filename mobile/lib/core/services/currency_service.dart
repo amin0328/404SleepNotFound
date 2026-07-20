@@ -29,10 +29,12 @@ class CurrencyService {
   }
 
   static Future<double?> getRate(String currencyCode) async {
-    if (currencyCode.toUpperCase() == 'SGD') return 1.0;
+    final code = currencyCode.trim().toUpperCase();
+    if (code == 'SGD') return 1.0;
     try {
       final rates = await getRates();
-      return rates[currencyCode.toUpperCase()];
+      final rate = rates[code];
+      return (rate != null && rate > 0) ? rate : null;
     } catch (_) {
       return null;
     }
@@ -40,7 +42,7 @@ class CurrencyService {
 
   static Future<double?> convertFromSgd(double sgdAmount, String targetCurrency) async {
     final rate = await getRate(targetCurrency);
-    if (rate == null) return null;
+    if (rate == null || rate <= 0) return null;
     return sgdAmount * rate;
   }
 }

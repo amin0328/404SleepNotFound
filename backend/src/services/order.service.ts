@@ -52,7 +52,8 @@ export async function getOrders(userId: string, status?: string, search?: string
        u.name        AS host_name,
        u.avatar_url  AS host_avatar,
        COUNT(DISTINCT op.user_id)::int AS participant_count,
-       CASE WHEN om.user_id IS NOT NULL OR o.organiser_id = $1 THEN true ELSE false END AS is_joined,
+       CASE WHEN om.user_id IS NOT NULL THEN true ELSE false END AS is_joined,
+       CASE WHEN o.organiser_id = $1 THEN true ELSE false END AS is_host,
        om.item_cost_sgd      AS my_item_cost_sgd,
        om.split_shipping_sgd AS my_split_shipping_sgd
      FROM group_orders o
@@ -73,7 +74,8 @@ export async function getOrderById(orderId: string, userId: string) {
     `SELECT
        o.*,
        u.name AS host_name,
-       CASE WHEN om.user_id IS NOT NULL OR o.organiser_id = $2 THEN true ELSE false END AS is_joined,
+       CASE WHEN om.user_id IS NOT NULL THEN true ELSE false END AS is_joined,
+       CASE WHEN o.organiser_id = $2 THEN true ELSE false END AS is_host,
        om.item_cost_sgd      AS my_item_cost_sgd,
        om.split_shipping_sgd AS my_split_shipping_sgd
      FROM group_orders o
@@ -229,7 +231,8 @@ export async function getCostSplit(orderId: string, userCurrency?: string) {
   const participants = await pool.query(
     `SELECT op.user_id, u.name, u.home_currency,
             op.items, op.item_cost_sgd, op.split_shipping_sgd,
-            o.shipping_cost_sgd
+            o.shipping_cost_sgd,
+            CASE WHEN op.user_id = o.organiser_id THEN true ELSE false END AS is_host
      FROM order_participants op
      JOIN users u ON u.id = op.user_id
      JOIN group_orders o ON o.id = op.order_id

@@ -428,7 +428,7 @@ class OrderCard extends StatelessWidget {
               }),
               const SizedBox(height: 8),
             ],
-            if (order.isJoined || isOwner)
+            if (order.isJoined)
               Row(
                 children: [
                   Expanded(
